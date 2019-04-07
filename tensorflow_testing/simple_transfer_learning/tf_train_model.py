@@ -68,24 +68,30 @@ correct_prediction=tf.equal(
 accuracy=tf.reduce_mean(
     tf.cast(correct_prediction, tf.float32))
 
+# Add ops to save and restore all the variables.
+saver = tf.train.Saver()
+
 # start the session
 with tf.Session() as sess:
-   # initialise the variables
-   sess.run(init_op)
+    # initialise the variables
+    sess.run(init_op)
 
-   # Not doing batches, do the whole training data each epoch
-   for epoch in range(epochs):
-    _, c = sess.run([optimiser, cross_entropy],
-                    feed_dict={x: train_x, y: train_y})
-    
-    print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(c))
+    # Not doing batches, do the whole training data each epoch
+    for epoch in range(epochs):
+        _, c = sess.run([optimiser, cross_entropy],
+                        feed_dict={x: train_x, y: train_y})
+
+        print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(c))
 
 
-   print(sess.run(accuracy, feed_dict={
-         x: train_x, y: train_y}))
+    print(sess.run(accuracy, feed_dict={
+            x: train_x, y: train_y}))
 
-   print("Testing: " + str(train_x[0]))
-   print(sess.run(y_, feed_dict={
-       x: [train_x[0]] }))
+    print("Testing: " + str(train_x[0]))
+    print(sess.run(y_, feed_dict={
+            x: [train_x[0]] }))
 
-   print(sess.run(W1))
+    print(sess.run(W1))
+
+    save_path = saver.save(sess, "tf_vars/model_save.ckpt")
+    print("Model saved in path: %s" % save_path)

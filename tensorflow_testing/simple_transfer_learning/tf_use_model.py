@@ -50,42 +50,17 @@ y_ = tf.nn.softmax(tf.add(tf.matmul(hidden_out, W2), b2))
 y_clipped = tf.clip_by_value(y_, 1e-10, 0.9999999)
 
 
-cross_entropy = -tf.reduce_mean(tf.reduce_sum(y * tf.log(y_clipped)
-                                              + (1 - y) * tf.log(1 - y_clipped), axis=1))
-
-# add an optimiser
-optimiser = tf.train.GradientDescentOptimizer(
-    learning_rate=learning_rate).minimize(cross_entropy)
-
-
-# finally setup the initialisation operator
-init_op=tf.global_variables_initializer()
-
-# define an accuracy assessment operation
-correct_prediction=tf.equal(
-    tf.argmax(y, 1), tf.argmax(y_, 1))
-
-accuracy=tf.reduce_mean(
-    tf.cast(correct_prediction, tf.float32))
+# Add ops to save and restore all the variables.
+saver = tf.train.Saver()
 
 # start the session
 with tf.Session() as sess:
-   # initialise the variables
-   sess.run(init_op)
+    # initialise the variables
+    saver.restore(sess, "tf_vars/model_save.ckpt")
+    print("Model restored.")
 
-   # Not doing batches, do the whole training data each epoch
-   for epoch in range(epochs):
-    _, c = sess.run([optimiser, cross_entropy],
-                    feed_dict={x: train_x, y: train_y})
-    
-    print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(c))
+    print("Testing: " + str(train_x[0]))
+    print(sess.run(y_clipped, feed_dict={
+            x: [train_x[0]] }))
 
 
-   print(sess.run(accuracy, feed_dict={
-         x: train_x, y: train_y}))
-
-   print("Testing: " + str(train_x[0]))
-   print(sess.run(y_, feed_dict={
-       x: [train_x[0]] }))
-
-   print(sess.run(W1))

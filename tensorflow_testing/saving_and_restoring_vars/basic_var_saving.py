@@ -37,14 +37,3 @@ with tf.Session() as sess:
     print(sess.run(result)) # prints 845 == 420*2+5
     print(sess.run(var)) # Prints 420, because we did not assign to it
 
-    # Now, lets make the graph a little more complicated by back feeding the result of the add_op into var
-    backfeed_assign_op = tf.assign(var, add_op)
-    sess.run(backfeed_assign_op)
-    print("Backfed var: %d" % sess.run(var)) # Prints 845, because we assigned the result to var
-    # Notice how we don't use any intermediate variables. The nodes are flowing directly into each other
-
-    # Now that we are backfeeding, if we run the backfeed assign op again a few times, it will keep getting updated
-    for _ in range(5):
-        sess.run(backfeed_assign_op)
-    
-    print("Repeated backfed var: %d" % sess.run(var)) # Prints a big number, because we backfed a few times
