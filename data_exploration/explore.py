@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.fftpack import fft
+import sys
 
 filename = "deepsig_data/GOLD_XYZ_OSC.0001_1024.hdf5"
 
@@ -33,6 +34,81 @@ class_map = {
  'OOK':[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
  '16QAM':[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
 }
+
+def find_boundaries_of_modulation(hdf5_file, modulation, start_index, end_index):
+    target_class = modulation.index(1)
+
+    middle_index = int((end_index + start_index)/2)
+
+
+    class_of_start = hdf5_file['Y'][start_index].tolist().index(1)
+    class_of_end = hdf5_file['Y'][end_index].tolist().index(1)
+
+    if class_of_start > target_class or class_of_end < target_class:
+        return None
+
+    # Base case, we've narrowed it down
+    if end_index - start_index == 1:
+        if class_of_start == target_class: return start_index
+        elif class_of_end   == target_class: return end_index
+        else:
+            print("Impossible base case")
+            sys.exit(1)
+
+    # Region where end boundary exists
+    if class_of_start == target_class and class_of_end != target_class:
+        end = find_boundaries_of_modulation(hdf5_file, modulation, start_index, middle_index)
+        if end == None:
+            end = find_boundaries_of_modulation(hdf5_file, modulation, middle_index, end_index)
+
+        if end == None:
+            print("Impossible case")
+            sys.exit(1)
+
+        # Special case where we were given the whole dataset and the modulation begins at the start
+        if start_index == 0 and end_index == len(f["Y"])-1:
+            return (0,end)
+        else:
+            return end
+
+    # Region where begin boundary exists
+    if class_of_start != target_class and class_of_end == target_class:
+        begin = find_boundaries_of_modulation(hdf5_file, modulation, start_index, middle_index)
+        if begin == None:
+            begin = find_boundaries_of_modulation(hdf5_file, modulation, middle_index, end_index)
+
+        if begin == None:
+            print("Impossible case")
+            sys.exit(1)
+
+        # Special case where we were given the entire list and data occurs at the end (IE no end boundary)
+        if start_index == 0 and end_index == len(f["Y"])-1:
+            return (begin, len(f["Y"])-1)
+        else:
+            return begin
+    
+    # Region where both boundaries exist
+    if class_of_start < target_class and class_of_end > target_class:
+        begin = find_boundaries_of_modulation(hdf5_file, modulation, start_index, middle_index)
+
+        # The first half contains nothing, meaning the second half must contain both
+        if begin == None:
+            return find_boundaries_of_modulation(hdf5_file, modulation, middle_index, end_index)
+
+        # The first half contained both
+        if isinstance(begin, tuple):
+            return begin 
+
+        # The fist half contained the begining, the second half must contain the end
+        else:
+            return (begin, find_boundaries_of_modulation(hdf5_file, modulation, middle_index, end_index))
+
+
+         
+
+
+
+
 
 def find_an_index_of_modulation(hdf5_file, modulation, start_index, end_index):
     target_class = modulation.index(1)
@@ -69,9 +145,14 @@ def flatten_data_sample(data_sample):
     return [d[0] + 1j*d[1] for d in data_sample]
 
 f = h5py.File(filename, 'r')
-data = f['X'][0]
 
-sample = get_data_sample("FM")
+# 32PSK, 16QAM
+print(find_boundaries_of_modulation(f, class_map["16QAM"], 0, len(f['X'])-1))
+
+
+sys.exit(0)
+data = f['X'][0]
+sample = get_data_sample("16QAM")
 sample = flatten_data_sample(sample)
 
 # Plot the raw complex signal
