@@ -1,8 +1,6 @@
 #! /usr/bin/python3
 import h5py
-import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 from scipy.fftpack import fft
 import sys
 

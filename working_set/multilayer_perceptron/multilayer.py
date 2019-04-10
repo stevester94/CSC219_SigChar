@@ -33,33 +33,58 @@ for i in range(set_split_point, len(dataset)):
 
 # Python optimisation variables
 learning_rate = 0.5
-epochs = 1000
+epochs = 10000
+NUM_HIDDEN_NODES = 10
+
+
+# Code to hijack the shit and just train an identity function
+if True:
+    LEN_X = 10
+    LEN_Y = LEN_X
+    train_x = []
+    train_y = []
+    for i in range(LEN_X):
+        row = [0] * LEN_X
+        row[i] = 1
+        train_x.append(row)
+        train_y.append(row)
+    test_x = train_x
+    test_y = train_y
 
 # declare the training data placeholders
 # Input 10 nodes, output 10 nodes
-x = tf.placeholder(tf.float32, [None, 2048])
-y = tf.placeholder(tf.float32, [None, 24])
+x = tf.placeholder(tf.float32, [None, LEN_X])
+y = tf.placeholder(tf.float32, [None, LEN_Y])
 
-NUM_HIDDEN_NODES = 100
 
 # now declare the weights connecting the input to the hidden layer
 W1 = tf.Variable(tf.random_normal([LEN_X, NUM_HIDDEN_NODES], stddev=0.03), name='W1')
 b1 = tf.Variable(tf.random_normal([NUM_HIDDEN_NODES]), name='b1')
+
+W2 = tf.Variable(tf.random_normal(
+    [NUM_HIDDEN_NODES, NUM_HIDDEN_NODES], stddev=0.03), name='W2')
+b2 = tf.Variable(tf.random_normal([NUM_HIDDEN_NODES]), name='b2')
+
+W3 = tf.Variable(tf.random_normal(
+    [NUM_HIDDEN_NODES, NUM_HIDDEN_NODES], stddev=0.03), name='W3')
+b3 = tf.Variable(tf.random_normal([NUM_HIDDEN_NODES]), name='b3')
+
 # and the weights connecting the hidden layer to the output layer
-W2 = tf.Variable(tf.random_normal([NUM_HIDDEN_NODES, LEN_Y], stddev=0.03), name='W2')
-b2 = tf.Variable(tf.random_normal([LEN_Y]), name='b2')
+W4 = tf.Variable(tf.random_normal([NUM_HIDDEN_NODES, LEN_Y], stddev=0.03), name='W4')
+b4 = tf.Variable(tf.random_normal([LEN_Y]), name='b4')
 
 # calculate the output of the hidden layer
 
-# Hidden layer: Multiply by the weights, add bias
-hidden_out = tf.add(tf.matmul(x, W1), b1)
+#  Hidden layer: Multiply input by the weights, add bias, rectify
+hidden_out = tf.nn.relu(tf.add(tf.matmul(x, W1), b1))
+hidden_out = tf.nn.relu(tf.add(tf.matmul(hidden_out, W2), b2))
+hidden_out = tf.nn.relu(tf.add(tf.matmul(hidden_out, W3), b3))
 
-# Next, we finalise the hidden_out operation by applying a rectified linear unit activation function to the matrix multiplication plus bias.
-hidden_out = tf.nn.relu(hidden_out)
+
 
 # now calculate the hidden layer output - in this case, let's use a softmax activated
 # output layer
-y_ = tf.nn.softmax(tf.add(tf.matmul(hidden_out, W2), b2))
+y_ = tf.nn.softmax(tf.add(tf.matmul(hidden_out, W4), b4))
 
 #converting the output y_ to a clipped version, limited between 1e-10 to 0.999999.  
 # This is to make sure that we never get a case were we have a log(0) operation occurring during training 
@@ -98,11 +123,9 @@ with tf.Session() as sess:
     print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(c))
 
 
-   print(sess.run(accuracy, feed_dict={
-         x: train_x, y: train_y}))
+   print("Accuracy on test set: %d" % sess.run(accuracy, feed_dict={
+         x: test_x, y: test_y}))
 
    print("Testing: " + str(train_x[0]))
    print(sess.run(y_, feed_dict={
        x: [train_x[0]] }))
-
-   print(sess.run(W1))
