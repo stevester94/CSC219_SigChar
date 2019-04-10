@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.fftpack import fft
 import sys
 
-filename = "deepsig_data/GOLD_XYZ_OSC.0001_1024.hdf5"
+deepsig_filename = "../../data_exploration/deepsig_data/GOLD_XYZ_OSC.0001_1024.hdf5"
 
 valid_snr = (0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2)
 
@@ -206,61 +206,65 @@ def find_an_index_of_modulation(hdf5_file, modulation, start_index, end_index):
     else:
         print("IMPOSSIBLE CASE")
 
-def get_data_sample(modulation):
-    f = h5py.File(filename, 'r')
+
+def flatten_data_sample(data_sample, flatten_to_IQ=False):
+    # This actually turns it into IQ samples
+    if flatten_to_IQ:
+        return [d[0] + 1j*d[1] for d in data_sample] # The multiply by j is slow as fuck
+
+    else:
+        # This just does a straight flatten, it's also fucking fast
+        return data_sample.flatten()
+
+
+# Accepts a list of modulations and SNRs
+# Returns a list of tuples, each of the type (numpy_array(the IQ), modulation (string representation), modulation (one hot), SNR)
+def get_data_samples(modulations, SNRs, flatten_to_IQ=False):
+    f = h5py.File(deepsig_filename, 'r')
+
+    deepsig_data_end_index = len(f["X"]) - 1
+
     ret_list = []
-    # for index,mod_type in enumerate(f['Y']):
-    #     if list(mod_type) == class_map[modulation]:
-    #         # ret_list.append(d)
-    #         pass
-    #     print("percent complete %f" % (index / len(f['Y'])))
-    
-    # return ret_list
 
-    index = find_an_index_of_modulation(f, class_map[modulation], 0, len(f['X']))
-    
-    return f['X'][index]
+    for mod in modulations:
+        for snr in SNRs:
+            print("Fetching %s at %ddB" % (mod, snr))
+            boundaries = find_boundaries_of_modulation(
+                f, class_map[mod], 0, deepsig_data_end_index, True)
+            boundaries = find_boundaries_of_SNR(f, snr, boundaries[0], boundaries[1], True)
 
-def flatten_data_sample(data_sample):
-    return [d[0] + 1j*d[1] for d in data_sample]
+            assert(len(boundaries) == 2)
 
-f = h5py.File(filename, 'r')
+            # Get the data, and flatten it because the internal representation doesn't do complex
+            deepsig_IQ = f["X"][boundaries[0]:boundaries[1]]
 
-# 32PSK, 16QAM
+            print("Flattening data")
+            flattened_IQ = []
+            for IQ in deepsig_IQ:
+                flattened_IQ.append(flatten_data_sample(IQ, flatten_to_IQ))
+            
+            deepsig_modulation_one_hot = f["Y"][boundaries[0]:boundaries[1]]
 
+            # Verify everything is the same length (They should be parallel)
+            assert(len(flattened_IQ) == len(deepsig_modulation_one_hot) == len(deepsig_IQ))
 
-#modulation_boundaries = find_boundaries_of_modulation(f, class_map["32PSK"], 0, len(f['X'])-1, True)
-modulation_boundaries = find_boundaries_of_modulation(f, class_map["32QAM"], 0, len(f['X'])-1, True)
-SNR_boundaries = find_boundaries_of_SNR(f, 30, modulation_boundaries[0], modulation_boundaries[1], True)
+            # Build the list
+            for i in range(0, len(flattened_IQ)):
+                list_item = (flattened_IQ[i], mod,
+                             deepsig_modulation_one_hot[i], snr)
+                ret_list.append(list_item)
 
-print("Modulation boundaries = [%d , %d]" % modulation_boundaries)
-print("SNR Boundaries = [%d , %d]" % SNR_boundaries)
-
-
-
-sample = f["X"][SNR_boundaries[0]]
-sample = flatten_data_sample(sample)
-
-# Plot the raw complex signal
-fig = plt.figure()
-ax = fig.add_subplot(211, projection='3d')
-ax.plot(np.real(sample), np.imag(sample), range(0,len(sample)), "blue")
-ax.set_xlabel("Real")
-ax.set_ylabel("Imag")
-ax.set_zlabel("Index")
-
-# Plot the_fft
-ax = fig.add_subplot(212)
-
-the_fft = fft(sample)
-the_fft = np.absolute(the_fft) # The values are complex, need the absolute val if we want constituent sine magnitude
-the_fft = the_fft * 2 # We lose half the amplitude because of the nyquist freq mirroring (aliasing I suppose)
-the_fft = the_fft / len(the_fft) # Just gotta do this because of the math of the FFT
-
-# Draw the nyquist frequency (we ignor everything past this freq)
-# ax.axvline(x=(sample_rate_Hz / 2))
+    return ret_list
 
 
-ax.plot(the_fft)
+if __name__ == '__main__':
+    # modulation_boundaries = find_boundaries_of_modulation(f, class_map["32QAM"], 0, len(f['X'])-1, True)
+    # SNR_boundaries = find_boundaries_of_SNR(f, 30, modulation_boundaries[0], modulation_boundaries[1], True)
 
-plt.show()
+    # data_samples = get_data_samples(["32PSK", "OOK", "16QAM"], [30])
+    data_samples = get_data_samples(["32PSK"], [30], flatten_to_IQ=False)
+    # data_samples = get_data_samples([], [])
+    print("Length of data: %d" % len(data_samples))
+
+    f = h5py.File(deepsig_filename, 'r')
+

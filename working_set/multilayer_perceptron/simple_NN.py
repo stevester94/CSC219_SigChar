@@ -1,6 +1,7 @@
 #! /bin/python
 # Using https://adventuresinmachinelearning.com/python-tensorflow-tutorial/
 import tensorflow as tf
+from deepsig_accessor import *
 
 # Lets try to train the identity function!
 
