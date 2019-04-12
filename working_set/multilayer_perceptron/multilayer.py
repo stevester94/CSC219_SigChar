@@ -19,7 +19,21 @@ train_y = []
 test_x  = []
 test_y  = []
 
-dataset = ds_accessor.get_data_samples(["32PSK", "32QAM"], [30])
+
+all_modulation_targets = ['32PSK', '16APSK', '32QAM', 'FM', 'GMSK', '32APSK', 'OQPSK', '8ASK', 'BPSK', '8PSK', 'AM-SSB-SC', '4ASK',
+                      '16PSK', '64APSK', '128QAM', '128APSK', 'AM-DSB-SC', 'AM-SSB-WC', '64QAM', 'QPSK', '256QAM', 'AM-DSB-WC', 'OOK', '16QAM']
+subset_modulation_targets = ['32PSK', '16APSK', '32QAM', 'FM', 'GMSK', '32APSK']
+
+
+all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
+               26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2]
+
+
+modulation_targets = subset_modulation_targets
+snr_targets = all_snr_targets
+
+
+dataset = ds_accessor.get_data_samples(modulation_targets, snr_targets)
 random.shuffle(dataset)
 
 set_split_point = int(len(dataset)*0.75)
@@ -33,12 +47,12 @@ for i in range(set_split_point, len(dataset)):
     test_y.append(dataset[i][2])
 
 # Python optimisation variables
-learning_rate = 0.001 # Orignally 0.5
-epochs = 300
+learning_rate = 0.001 # Orignally 0.001 for Adam
+epochs = 500
 
 # Notes on identity function:
 # 10 works well for 1 hidden, not for 3
-NUM_HIDDEN_NODES = 256
+NUM_HIDDEN_NODES = 2048
 
 
 # Code to hijack the shit and just train an identity function
@@ -84,7 +98,7 @@ b4 = tf.Variable(tf.random_normal([LEN_Y]), name='b4')
 #  Hidden layer: Multiply input by the weights, add bias, rectify
 hidden_out = tf.nn.relu(tf.add(tf.matmul(x, W1), b1))
 hidden_out = tf.nn.relu(tf.add(tf.matmul(hidden_out, W2), b2))
-# hidden_out = tf.nn.relu(tf.add(tf.matmul(hidden_out, W3), b3))
+hidden_out = tf.nn.relu(tf.add(tf.matmul(hidden_out, W3), b3))
 out_layer = tf.add(tf.matmul(hidden_out, W4), b4)
 
 
