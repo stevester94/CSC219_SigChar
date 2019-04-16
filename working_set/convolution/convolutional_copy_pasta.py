@@ -37,6 +37,8 @@ def conv_net(x_dict, n_classes, dropout, reuse, is_training):
         # TF Estimator input is a dict, in case of multiple inputs
         x = x_dict['images']
 
+        print("Steven - X: %s" % str(x))
+
         # MNIST data input is a 1-D vector of 784 features (28*28 pixels)
         # Reshape to match picture format [Height x Width x Channel]
         # Tensor input become 4-D: [Batch Size, Height, Width, Channel]
@@ -110,11 +112,15 @@ def model_fn(features, labels, mode):
 model = tf.estimator.Estimator(model_fn)
 
 # Define the input function for training
-input_fn = tf.estimator.inputs.numpy_input_fn(
-    x={'images': mnist.train.images}, y=mnist.train.labels,
-    batch_size=batch_size, num_epochs=None, shuffle=True)
+def my_fucking_feeder():
+    return {'images': mnist.train.images[0:100]}, mnist.train.labels[0:100]
+
+
+# input_fn = tf.estimator.inputs.numpy_input_fn(
+#     x={'images': mnist.train.images}, y=mnist.train.labels,
+#     batch_size=batch_size, num_epochs=None, shuffle=True)
 # Train the Model
-model.train(input_fn, steps=num_steps)
+model.train(my_fucking_feeder, steps=num_steps)
 
 # Evaluate the Model
 # Define the input function for evaluating

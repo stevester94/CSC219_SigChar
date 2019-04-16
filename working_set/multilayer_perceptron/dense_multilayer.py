@@ -80,29 +80,20 @@ x = tf.placeholder(tf.float32, [None, LEN_X])
 y = tf.placeholder(tf.float32, [None, LEN_Y])
 
 
-# now declare the weights connecting the input to the hidden layer
-W1 = tf.Variable(tf.random_normal([LEN_X, NUM_HIDDEN_NODES], stddev=0.03), name='W1')
-b1 = tf.Variable(tf.random_normal([NUM_HIDDEN_NODES]), name='b1')
 
-W2 = tf.Variable(tf.random_normal(
-    [NUM_HIDDEN_NODES, NUM_HIDDEN_NODES], stddev=0.03), name='W2')
-b2 = tf.Variable(tf.random_normal([NUM_HIDDEN_NODES]), name='b2')
 
-W3 = tf.Variable(tf.random_normal(
-    [NUM_HIDDEN_NODES, NUM_HIDDEN_NODES], stddev=0.03), name='W3')
-b3 = tf.Variable(tf.random_normal([NUM_HIDDEN_NODES]), name='b3')
-
-# and the weights connecting the hidden layer to the output layer
-W4 = tf.Variable(tf.random_normal([NUM_HIDDEN_NODES, LEN_Y], stddev=0.03), name='W4')
-b4 = tf.Variable(tf.random_normal([LEN_Y]), name='b4')
+hidden_out = tf.layers.dense(x, NUM_HIDDEN_NODES, activation=tf.nn.relu)
+hidden_out = tf.layers.dense(hidden_out, NUM_HIDDEN_NODES, activation=tf.nn.relu)
+# hidden_out = tf.layers.dense(hidden_out, NUM_HIDDEN_NODES, activation=tf.nn.relu)
+out_layer = tf.layers.dense(hidden_out, LEN_Y)
 
 # calculate the output of the hidden layer
 
 #  Hidden layer: Multiply input by the weights, add bias, rectify
-hidden_out = tf.nn.relu(tf.add(tf.matmul(x, W1), b1))
-hidden_out = tf.nn.relu(tf.add(tf.matmul(hidden_out, W2), b2))
-hidden_out = tf.nn.relu(tf.add(tf.matmul(hidden_out, W3), b3))
-out_layer = tf.add(tf.matmul(hidden_out, W4), b4)
+# hidden_out = tf.nn.relu(tf.add(tf.matmul(x, W1), b1))
+# hidden_out = tf.nn.relu(tf.add(tf.matmul(hidden_out, W2), b2))
+# hidden_out = tf.nn.relu(tf.add(tf.matmul(hidden_out, W3), b3))
+# out_layer = tf.add(tf.matmul(hidden_out, W4), b4)
 
 
 # No clue why, but the magic comes from this, was originally using some crazy ass logarithm and clipping
