@@ -49,7 +49,7 @@ snr_targets = [30]
 
 
 dataset = ds_accessor.get_data_samples(modulation_targets, snr_targets)
-random.shuffle(dataset)
+# random.shuffle(dataset)
 
 train_x = []
 train_y = []
@@ -76,7 +76,7 @@ test_y = np.array(test_y)
 
 # Training Parameters
 learning_rate = 0.001
-num_steps = 500
+num_steps = 10
 # batch_size = 128
 batch_size = 1
 
@@ -118,11 +118,12 @@ def conv_net(x, n_classes, dropout, reuse, is_training):
 
         print("Steven - num_classes: " + str(n_classes))
         print("Steven - X: %s" % str(x))
-
-        out = tf.layers.dense(x, 2048, activation=tf.nn.relu)
+        out = tf.Print(x, [x], "Input: ")
+        out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
         out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
         # out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
         out = tf.layers.dense(out, n_classes)
+        out = tf.Print(out, [out], "Output: ", summarize=100)
     return out
 
 
@@ -155,8 +156,15 @@ def model_fn(features, labels, mode):
 
     # loss_op = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
     #     logits=logits_train, labels=tf.cast(labels, dtype=tf.int32)))
-    loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-        logits=logits_train, labels=labels))
+
+    printed_labels = tf.Print(labels, [labels], "Labels: ", summarize=100)
+
+    loss_op = tf.nn.softmax_cross_entropy_with_logits(
+        logits=logits_train, labels=printed_labels)
+    loss_op = tf.Print(loss_op, [loss_op], "Cross Entropy: ")
+
+    loss_op = tf.reduce_mean(loss_op)
+    loss_op = tf.Print(loss_op, [loss_op], "Reduce Mean: ")
 
 
 
@@ -183,7 +191,8 @@ def model_fn(features, labels, mode):
 model = tf.estimator.Estimator(model_fn)
 
 def my_fucking_feeder():
-    return tf.constant(train_x[0:100]), tf.constant(train_y[0:100])
+    return tf.constant(train_x[0:1]), tf.constant(train_y[0:1])
+    # return tf.constant([train_x[0]]), tf.constant([train_y[0]])
     # return train_x[0:100], tf.constant(1, shape=[100])
     # return {"kek": train_x[0:100]}, range(0,100)
     # return {'images': mnist.train.images[0:100]}, mnist.train.labels[0:100]
@@ -203,19 +212,77 @@ model.train(my_fucking_feeder, steps=num_steps)
 #     x={'images': mnist.test.images}, y=mnist.test.labels,
 #     batch_size=batch_size, shuffle=False)
 # Use the Estimator 'evaluate' method
-print("Evaluating!")
-e = model.evaluate(my_fucking_feeder, steps=num_steps)
+# print("Evaluating!")
+# e = model.evaluate(my_fucking_feeder, steps=num_steps)
 
-print("Testing Accuracy:", e['accuracy'])
+# print("Testing Accuracy:", e['accuracy'])
 
 feeder_called = False
 def another_feeder():
     global feeder_called
     if not feeder_called:
         feeder_called = True
-        return tf.constant(train_x[0]), tf.constant(train_y[0])
+        return train_x[0:100], train_y[0:100]
     else:
         raise StopIteration
 
-p = model.predict(another_feeder)
+
+output = tf.constant([[225.725769,
+  -22.1992931,
+  -29.8155403,
+  -23.4150391,
+  -24.1813965,
+  -36.8599548,
+  -38.964447,
+  -38.1486969,
+  -43.3182373,
+  -32.6156807,
+  -32.9504051,
+  -39.4783707,
+  -11.6777391,
+  -24.5229359,
+  -31.0119743,
+  -10.3592606,
+  -40.6214256,
+  -36.9803429,
+  -46.4612923,
+  -38.5201645,
+  -41.3779602,
+  -18.8825436,
+  -45.1395454,
+  -57.8695526]])
+
+labels = tf.constant([[1,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       0]])
+
+with tf.Session() as sess:
+    # Prints 0!
+    sm = tf.nn.softmax_cross_entropy_with_logits(
+        logits=output, labels=labels)
+    sm = tf.Print(sm, [sm], "Test softmax: ", summarize=100)
+    sess.run(sm)
+
+# p = model.predict(another_feeder)
 
