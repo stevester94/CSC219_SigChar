@@ -1,3 +1,5 @@
+from __future__ import division, print_function, absolute_import
+
 import tensorflow as tf
 """ Convolutional Neural Network.
 
@@ -11,7 +13,6 @@ example for a raw implementation with variables.
 Author: Aymeric Damien
 Project: https://github.com/aymericdamien/TensorFlow-Examples/
 """
-from __future__ import division, print_function, absolute_import
 
 # Import MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
