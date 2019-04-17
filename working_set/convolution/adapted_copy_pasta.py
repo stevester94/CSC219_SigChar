@@ -76,9 +76,8 @@ test_y = np.array(test_y)
 
 # Training Parameters
 learning_rate = 0.001
-num_steps = 10
-# batch_size = 128
-batch_size = 1
+batch_size = len(train_x)
+num_train_epochs = 100
 
 # Network Parameters
 num_classes = len(train_y[0])
@@ -116,14 +115,11 @@ def conv_net(x, n_classes, dropout, reuse, is_training):
 
         # Output layer, class prediction
 
-        print("Steven - num_classes: " + str(n_classes))
-        print("Steven - X: %s" % str(x))
-        out = tf.Print(x, [x], "Input: ")
-        out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
+
+        out = tf.layers.dense(x, 2048, activation=tf.nn.relu)
         out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
         # out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
         out = tf.layers.dense(out, n_classes)
-        out = tf.Print(out, [out], "Output: ", summarize=100)
     return out
 
 
@@ -137,9 +133,7 @@ def model_fn(features, labels, mode):
     logits_test = conv_net(features, num_classes, dropout, reuse=True,
                            is_training=False)
 
-    # Predictions
-    # pred_classes = tf.argmax(logits_test, axis=1)
-    pred_classes = logits_test
+    pred_classes = tf.argmax(logits_test, axis=1)
     pred_probas = tf.nn.softmax(logits_test)
 
     # If prediction mode, early return
@@ -157,14 +151,11 @@ def model_fn(features, labels, mode):
     # loss_op = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
     #     logits=logits_train, labels=tf.cast(labels, dtype=tf.int32)))
 
-    printed_labels = tf.Print(labels, [labels], "Labels: ", summarize=100)
 
     loss_op = tf.nn.softmax_cross_entropy_with_logits(
-        logits=logits_train, labels=printed_labels)
-    loss_op = tf.Print(loss_op, [loss_op], "Cross Entropy: ")
+        logits=logits_train, labels=labels)
 
     loss_op = tf.reduce_mean(loss_op)
-    loss_op = tf.Print(loss_op, [loss_op], "Reduce Mean: ")
 
 
 
@@ -173,7 +164,8 @@ def model_fn(features, labels, mode):
                                   global_step=tf.train.get_global_step())
 
     # Evaluate the accuracy of the model
-    acc_op = tf.metrics.accuracy(labels=labels, predictions=pred_classes)
+    # ITS GOD DAMN HERE
+    acc_op = tf.metrics.accuracy(labels=tf.argmax(labels, axis=1), predictions=pred_classes)
 
     # TF Estimators requires to return a EstimatorSpec, that specify
     # the different ops for training, evaluating, ...
@@ -190,99 +182,107 @@ def model_fn(features, labels, mode):
 # Build the Estimator
 model = tf.estimator.Estimator(model_fn)
 
+feeder_counter = 0
 def my_fucking_feeder():
-    return tf.constant(train_x[0:1]), tf.constant(train_y[0:1])
+    global feeder_counter
+    if feeder_counter < num_train_epochs:
+        feeder_counter+= 1
+        return tf.constant(train_x), tf.constant(train_y)
+    else:
+        raise StopIteration
     # return tf.constant([train_x[0]]), tf.constant([train_y[0]])
     # return train_x[0:100], tf.constant(1, shape=[100])
     # return {"kek": train_x[0:100]}, range(0,100)
     # return {'images': mnist.train.images[0:100]}, mnist.train.labels[0:100]
 
 # Define the input function for training
-# input_fn = tf.estimator.inputs.numpy_input_fn(
-#     x=train_x, y=train_y,
-#     batch_size=batch_size, num_epochs=None, shuffle=True)
+input_fn = tf.estimator.inputs.numpy_input_fn(
+    x=train_x, y=train_y,
+    batch_size=batch_size, num_epochs=num_train_epochs, shuffle=False)
 
 # Train the Model
 print("Training!")
-model.train(my_fucking_feeder, steps=num_steps)
+model.train(my_fucking_feeder)
 
 # Evaluate the Model
 # Define the input function for evaluating
-# input_fn = tf.estimator.inputs.numpy_input_fn(
-#     x={'images': mnist.test.images}, y=mnist.test.labels,
-#     batch_size=batch_size, shuffle=False)
+input_fn = tf.estimator.inputs.numpy_input_fn(
+    x=test_x, y=test_y,
+    batch_size=batch_size, num_epochs=1, shuffle=True)
 # Use the Estimator 'evaluate' method
-# print("Evaluating!")
-# e = model.evaluate(my_fucking_feeder, steps=num_steps)
+print("Evaluating!")
+e = model.evaluate(input_fn)
 
-# print("Testing Accuracy:", e['accuracy'])
+print("Testing Accuracy:", e['accuracy'])
 
-feeder_called = False
-def another_feeder():
-    global feeder_called
-    if not feeder_called:
-        feeder_called = True
-        return train_x[0:100], train_y[0:100]
-    else:
-        raise StopIteration
+# feeder_called = False
+# def another_feeder():
+#     global feeder_called
+#     if not feeder_called:
+#         feeder_called = True
+#         return train_x[0:100], train_y[0:100]
+#     else:
+#         raise StopIteration
 
 
-output = tf.constant([[225.725769,
-  -22.1992931,
-  -29.8155403,
-  -23.4150391,
-  -24.1813965,
-  -36.8599548,
-  -38.964447,
-  -38.1486969,
-  -43.3182373,
-  -32.6156807,
-  -32.9504051,
-  -39.4783707,
-  -11.6777391,
-  -24.5229359,
-  -31.0119743,
-  -10.3592606,
-  -40.6214256,
-  -36.9803429,
-  -46.4612923,
-  -38.5201645,
-  -41.3779602,
-  -18.8825436,
-  -45.1395454,
-  -57.8695526]])
+# Holy shit, this is not wrong at all... It must be our accuracy op
+# output = tf.constant([
+#    225.725769,
+#   -22.1992931,
+#   -29.8155403,
+#   -23.4150391,
+#   -24.1813965,
+#   -36.8599548,
+#   -38.964447,
+#   -38.1486969,
+#   -43.3182373,
+#   -32.6156807,
+#   -32.9504051,
+#   -39.4783707,
+#   -11.6777391,
+#   -24.5229359,
+#   -31.0119743,
+#   -10.3592606,
+#   -40.6214256,
+#   -36.9803429,
+#   -46.4612923,
+#   -38.5201645,
+#   -41.3779602,
+#   -18.8825436,
+#   -45.1395454,
+#   -57.8695526])
 
-labels = tf.constant([[1,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0,
-                       0]])
+# output = tf.constant([output,output,output,output])
 
-with tf.Session() as sess:
-    # Prints 0!
-    sm = tf.nn.softmax_cross_entropy_with_logits(
-        logits=output, labels=labels)
-    sm = tf.Print(sm, [sm], "Test softmax: ", summarize=100)
-    sess.run(sm)
+output = tf.constant(-1.0, shape=[2, 5])
 
-# p = model.predict(another_feeder)
+# labels = tf.constant([1,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0,
+#                        0])
 
+# with tf.Session() as sess:
+#     # Prints 0!
+#     sm = tf.argmax(output, axis=1)
+#     sm = tf.Print(sm, [sm], "Test softmax: ", summarize=100)
+#     sess.run(sm)
