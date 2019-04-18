@@ -44,12 +44,12 @@ all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
                    26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2]
 
 
-modulation_targets = subset_modulation_targets
+modulation_targets = all_modulation_targets
 snr_targets = [30]
 
 
 dataset = ds_accessor.get_data_samples(modulation_targets, snr_targets)
-# random.shuffle(dataset)
+random.shuffle(dataset)
 
 train_x = []
 train_y = []
@@ -73,14 +73,18 @@ train_y = np.array(train_y)
 test_x = np.array(test_x)
 test_y = np.array(test_y)
 
+# Some info about our data
+LEN_X = 2048
+LEN_Y = 24
+
 #############################
 # End Build training set
 #############################
 
 # Training Parameters
 learning_rate = 0.001
-batch_size = len(train_x)
-num_train_epochs = 100
+batch_size = 100
+num_train_epochs = 1000
 
 # Network Parameters
 num_classes = len(train_y[0])
@@ -97,31 +101,32 @@ def conv_net(x, n_classes, dropout, reuse, is_training):
             # MNIST data input is a 1-D vector of 784 features (28*28 pixels)
             # Reshape to match picture format [Height x Width x Channel]
             # Tensor input become 4-D: [Batch Size, Height, Width, Channel]
-            # x = tf.reshape(x, shape=[-1, 28, 28, 1])
+            x = tf.reshape(x, shape=[-1, LEN_X, 1])
 
             # # Convolution Layer with 32 filters and a kernel size of 5
-            # conv1 = tf.layers.conv2d(x, 32, 5, activation=tf.nn.relu)
+            conv1 = tf.layers.conv1d(x, 32, 5, activation=tf.nn.relu)
             # # Max Pooling (down-sampling) with strides of 2 and kernel size of 2
-            # conv1 = tf.layers.max_pooling2d(conv1, 2, 2)
+            conv1 = tf.layers.max_pooling1d(conv1, 2, 2)
 
-            # # Convolution Layer with 64 filters and a kernel size of 3
-            # conv2 = tf.layers.conv2d(conv1, 64, 3, activation=tf.nn.relu)
-            # # Max Pooling (down-sampling) with strides of 2 and kernel size of 2
-            # conv2 = tf.layers.max_pooling2d(conv2, 2, 2)
+            # Convolution Layer with 64 filters and a kernel size of 3
+            conv2 = tf.layers.conv1d(conv1, 64, 3, activation=tf.nn.relu)
+            # Max Pooling (down-sampling) with strides of 2 and kernel size of 2
+            conv2 = tf.layers.max_pooling1d(conv2, 2, 2)
 
             # # Flatten the data to a 1-D vector for the fully connected layer
-            # fc1 = tf.contrib.layers.flatten(conv2)
+            fc1 = tf.contrib.layers.flatten(conv2)
 
-            # Fully connected layer (in tf contrib folder for now)
-            # fc1 = tf.layers.dense(x, 24) # Fucked with this one
             # Apply Dropout (if is_training is False, dropout is not applied)
-            # fc1 = tf.layers.dropout(fc1, rate=dropout, training=is_training)
+            fc1 = tf.layers.dropout(fc1, rate=dropout, training=is_training)
 
             # Output layer, class prediction
 
             print_op = tf.print("Shape of input: ", tf.shape(x))
-            with tf.control_dependencies([print_op]):
-                out = tf.layers.dense(x, 2048, activation=tf.nn.relu)
+            with tf.control_dependencies([]):
+                out = tf.layers.dense(fc1, 2048, activation=tf.nn.relu)
+                out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
+                out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
+                out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
                 out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
                 # out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
                 out = tf.layers.dense(out, n_classes)
@@ -143,7 +148,7 @@ def model_fn(features, labels, mode):
     logits_test_print_op = tf.print(
         "Shape of test output: ", tf.shape(logits_test))
 
-    with tf.control_dependencies([logits_test_print_op]):
+    with tf.control_dependencies([]):
         pred_classes = tf.argmax(logits_test, axis=1)
     pred_probas = tf.nn.softmax(logits_test)
 
@@ -165,7 +170,7 @@ def model_fn(features, labels, mode):
     logits_train_print_op = tf.print(
         "Shape of train output: ", tf.shape(logits_train))
     
-    with tf.control_dependencies([logits_train_print_op]):
+    with tf.control_dependencies([]):
         loss_op = tf.nn.softmax_cross_entropy_with_logits(
             logits=logits_train, labels=labels)
 
@@ -178,10 +183,9 @@ def model_fn(features, labels, mode):
                                   global_step=tf.train.get_global_step())
 
     # Evaluate the accuracy of the model
-    # ITS GOD DAMN HERE
     acc_op = tf.metrics.accuracy(labels=tf.argmax(labels, axis=1), predictions=pred_classes)
 
-    logging_hook = tf.train.LoggingTensorHook({"loss": loss_op}, every_n_iter=1)
+    logging_hook = tf.train.LoggingTensorHook({"loss": loss_op}, every_n_iter=10)
 
     # TF Estimators requires to return a EstimatorSpec, that specify
     # the different ops for training, evaluating, ...
