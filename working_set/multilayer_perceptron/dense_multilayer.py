@@ -51,7 +51,7 @@ for i in range(set_split_point, len(dataset)):
 
 # Python optimisation variables
 learning_rate = 0.001 # Orignally 0.001 for Adam
-epochs = 100
+epochs = 5
 
 # Notes on identity function:
 # 10 works well for 1 hidden, not for 3
@@ -81,11 +81,13 @@ y = tf.placeholder(tf.float32, [None, LEN_Y])
 
 
 
+print_op = tf.print("Shape of input: ", tf.shape(x))
 
 hidden_out = tf.layers.dense(x, NUM_HIDDEN_NODES, activation=tf.nn.relu)
 hidden_out = tf.layers.dense(hidden_out, NUM_HIDDEN_NODES, activation=tf.nn.relu)
-# hidden_out = tf.layers.dense(hidden_out, NUM_HIDDEN_NODES, activation=tf.nn.relu)
-out_layer = tf.layers.dense(hidden_out, LEN_Y)
+
+with tf.control_dependencies([print_op]):
+    out_layer = tf.layers.dense(hidden_out, LEN_Y)
 
 # calculate the output of the hidden layer
 
@@ -97,8 +99,11 @@ out_layer = tf.layers.dense(hidden_out, LEN_Y)
 
 
 # No clue why, but the magic comes from this, was originally using some crazy ass logarithm and clipping
-loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-    logits=out_layer, labels=y))
+print2_op = tf.print("Shape of output: ", tf.shape(out_layer))
+
+with tf.control_dependencies([print2_op]):
+    loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+        logits=out_layer, labels=y))
 
 # add an optimiser
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
@@ -129,6 +134,7 @@ with tf.Session() as sess:
     ##############
 
     # Softmax the output
+
     pred = tf.nn.softmax(out_layer)
 
     # For each categorical output, see if they're equal and return a tensor

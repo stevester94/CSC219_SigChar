@@ -22,7 +22,7 @@ Author: Aymeric Damien
 Project: https://github.com/aymericdamien/TensorFlow-Examples/
 """
 
-
+tf.logging.set_verbosity(tf.logging.INFO)
 
 #################################
 # Begin Build training set
@@ -65,6 +65,9 @@ for i in range(set_split_point, len(dataset)):
     test_x.append(dataset[i][0])
     test_y.append(dataset[i][2])
 
+print("Num training samples: %d" % len(train_x))
+print("Num test samples: %d" % len(test_x))
+
 train_x = np.array(train_x)
 train_y = np.array(train_y)
 test_x = np.array(test_x)
@@ -88,38 +91,40 @@ dropout = 0.25  # Dropout, probability to drop a unit
 def conv_net(x, n_classes, dropout, reuse, is_training):
     # Define a scope for reusing the variables
     with tf.variable_scope('ConvNet', reuse=reuse):
-        # TF Estimator input is a dict, in case of multiple inputs
 
-        # MNIST data input is a 1-D vector of 784 features (28*28 pixels)
-        # Reshape to match picture format [Height x Width x Channel]
-        # Tensor input become 4-D: [Batch Size, Height, Width, Channel]
-        # x = tf.reshape(x, shape=[-1, 28, 28, 1])
+            # TF Estimator input is a dict, in case of multiple inputs
 
-        # # Convolution Layer with 32 filters and a kernel size of 5
-        # conv1 = tf.layers.conv2d(x, 32, 5, activation=tf.nn.relu)
-        # # Max Pooling (down-sampling) with strides of 2 and kernel size of 2
-        # conv1 = tf.layers.max_pooling2d(conv1, 2, 2)
+            # MNIST data input is a 1-D vector of 784 features (28*28 pixels)
+            # Reshape to match picture format [Height x Width x Channel]
+            # Tensor input become 4-D: [Batch Size, Height, Width, Channel]
+            # x = tf.reshape(x, shape=[-1, 28, 28, 1])
 
-        # # Convolution Layer with 64 filters and a kernel size of 3
-        # conv2 = tf.layers.conv2d(conv1, 64, 3, activation=tf.nn.relu)
-        # # Max Pooling (down-sampling) with strides of 2 and kernel size of 2
-        # conv2 = tf.layers.max_pooling2d(conv2, 2, 2)
+            # # Convolution Layer with 32 filters and a kernel size of 5
+            # conv1 = tf.layers.conv2d(x, 32, 5, activation=tf.nn.relu)
+            # # Max Pooling (down-sampling) with strides of 2 and kernel size of 2
+            # conv1 = tf.layers.max_pooling2d(conv1, 2, 2)
 
-        # # Flatten the data to a 1-D vector for the fully connected layer
-        # fc1 = tf.contrib.layers.flatten(conv2)
+            # # Convolution Layer with 64 filters and a kernel size of 3
+            # conv2 = tf.layers.conv2d(conv1, 64, 3, activation=tf.nn.relu)
+            # # Max Pooling (down-sampling) with strides of 2 and kernel size of 2
+            # conv2 = tf.layers.max_pooling2d(conv2, 2, 2)
 
-        # Fully connected layer (in tf contrib folder for now)
-        # fc1 = tf.layers.dense(x, 24) # Fucked with this one
-        # Apply Dropout (if is_training is False, dropout is not applied)
-        # fc1 = tf.layers.dropout(fc1, rate=dropout, training=is_training)
+            # # Flatten the data to a 1-D vector for the fully connected layer
+            # fc1 = tf.contrib.layers.flatten(conv2)
 
-        # Output layer, class prediction
+            # Fully connected layer (in tf contrib folder for now)
+            # fc1 = tf.layers.dense(x, 24) # Fucked with this one
+            # Apply Dropout (if is_training is False, dropout is not applied)
+            # fc1 = tf.layers.dropout(fc1, rate=dropout, training=is_training)
 
+            # Output layer, class prediction
 
-        out = tf.layers.dense(x, 2048, activation=tf.nn.relu)
-        out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
-        # out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
-        out = tf.layers.dense(out, n_classes)
+            print_op = tf.print("Shape of input: ", tf.shape(x))
+            with tf.control_dependencies([print_op]):
+                out = tf.layers.dense(x, 2048, activation=tf.nn.relu)
+                out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
+                # out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
+                out = tf.layers.dense(out, n_classes)
     return out
 
 
@@ -128,12 +133,18 @@ def model_fn(features, labels, mode):
     # Build the neural network
     # Because Dropout have different behavior at training and prediction time, we
     # need to create 2 distinct computation graphs that still share the same weights.
+    
     logits_train = conv_net(features, num_classes, dropout, reuse=False,
                             is_training=True)
     logits_test = conv_net(features, num_classes, dropout, reuse=True,
                            is_training=False)
 
-    pred_classes = tf.argmax(logits_test, axis=1)
+
+    logits_test_print_op = tf.print(
+        "Shape of test output: ", tf.shape(logits_test))
+
+    with tf.control_dependencies([logits_test_print_op]):
+        pred_classes = tf.argmax(logits_test, axis=1)
     pred_probas = tf.nn.softmax(logits_test)
 
     # If prediction mode, early return
@@ -151,9 +162,12 @@ def model_fn(features, labels, mode):
     # loss_op = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
     #     logits=logits_train, labels=tf.cast(labels, dtype=tf.int32)))
 
-
-    loss_op = tf.nn.softmax_cross_entropy_with_logits(
-        logits=logits_train, labels=labels)
+    logits_train_print_op = tf.print(
+        "Shape of train output: ", tf.shape(logits_train))
+    
+    with tf.control_dependencies([logits_train_print_op]):
+        loss_op = tf.nn.softmax_cross_entropy_with_logits(
+            logits=logits_train, labels=labels)
 
     loss_op = tf.reduce_mean(loss_op)
 
@@ -167,6 +181,8 @@ def model_fn(features, labels, mode):
     # ITS GOD DAMN HERE
     acc_op = tf.metrics.accuracy(labels=tf.argmax(labels, axis=1), predictions=pred_classes)
 
+    logging_hook = tf.train.LoggingTensorHook({"loss": loss_op}, every_n_iter=1)
+
     # TF Estimators requires to return a EstimatorSpec, that specify
     # the different ops for training, evaluating, ...
     estim_specs = tf.estimator.EstimatorSpec(
@@ -174,6 +190,7 @@ def model_fn(features, labels, mode):
         predictions=pred_classes,
         loss=loss_op,
         train_op=train_op,
+        training_hooks=[logging_hook],
         eval_metric_ops={'accuracy': acc_op})
 
     return estim_specs
@@ -186,7 +203,8 @@ feeder_counter = 0
 def my_fucking_feeder():
     global feeder_counter
     if feeder_counter < num_train_epochs:
-        feeder_counter+= 1
+        print("my_fucking_feeder epoch: %d" % feeder_counter)
+        feeder_counter += 1
         return tf.constant(train_x), tf.constant(train_y)
     else:
         raise StopIteration
@@ -198,17 +216,18 @@ def my_fucking_feeder():
 # Define the input function for training
 input_fn = tf.estimator.inputs.numpy_input_fn(
     x=train_x, y=train_y,
+    # batch_size=batch_size, num_epochs=num_train_epochs, shuffle=False, num_threads=4, queue_capacity=batch_size)
     batch_size=batch_size, num_epochs=num_train_epochs, shuffle=False)
 
 # Train the Model
 print("Training!")
-model.train(my_fucking_feeder)
+model.train(input_fn)
 
 # Evaluate the Model
 # Define the input function for evaluating
 input_fn = tf.estimator.inputs.numpy_input_fn(
     x=test_x, y=test_y,
-    batch_size=batch_size, num_epochs=1, shuffle=True)
+    batch_size=batch_size, num_epochs=1, shuffle=False)
 # Use the Estimator 'evaluate' method
 print("Evaluating!")
 e = model.evaluate(input_fn)
