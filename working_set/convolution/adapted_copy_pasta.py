@@ -45,7 +45,7 @@ all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
 
 
 modulation_targets = all_modulation_targets
-snr_targets = [30]
+snr_targets = [0]
 
 
 dataset = ds_accessor.get_data_samples(modulation_targets, snr_targets)
@@ -84,7 +84,7 @@ LEN_Y = 24
 # Training Parameters
 learning_rate = 0.001
 batch_size = 100
-num_train_epochs = 1000
+num_train_epochs = 20
 
 # Network Parameters
 num_classes = len(train_y[0])
@@ -104,17 +104,30 @@ def conv_net(x, n_classes, dropout, reuse, is_training):
             x = tf.reshape(x, shape=[-1, LEN_X, 1])
 
             # # Convolution Layer with 32 filters and a kernel size of 5
-            conv1 = tf.layers.conv1d(x, 32, 5, activation=tf.nn.relu)
+            conv = tf.layers.conv1d(x, 64, 3, activation=tf.nn.relu)
             # # Max Pooling (down-sampling) with strides of 2 and kernel size of 2
-            conv1 = tf.layers.max_pooling1d(conv1, 2, 2)
+            conv = tf.layers.max_pooling1d(conv, 2, 2)
 
-            # Convolution Layer with 64 filters and a kernel size of 3
-            conv2 = tf.layers.conv1d(conv1, 64, 3, activation=tf.nn.relu)
-            # Max Pooling (down-sampling) with strides of 2 and kernel size of 2
-            conv2 = tf.layers.max_pooling1d(conv2, 2, 2)
+            conv = tf.layers.conv1d(conv, 64, 3, activation=tf.nn.relu)
+            conv = tf.layers.max_pooling1d(conv, 2, 2)
+
+            conv = tf.layers.conv1d(conv, 64, 3, activation=tf.nn.relu)
+            conv = tf.layers.max_pooling1d(conv, 2, 2)
+
+            conv = tf.layers.conv1d(conv, 64, 3, activation=tf.nn.relu)
+            conv = tf.layers.max_pooling1d(conv, 2, 2)
+
+            conv = tf.layers.conv1d(conv, 64, 3, activation=tf.nn.relu)
+            conv = tf.layers.max_pooling1d(conv, 2, 2)
+
+            conv = tf.layers.conv1d(conv, 64, 3, activation=tf.nn.relu)
+            conv = tf.layers.max_pooling1d(conv, 2, 2)
+
+            conv = tf.layers.conv1d(conv, 64, 3, activation=tf.nn.relu)
+            conv = tf.layers.max_pooling1d(conv, 2, 2)
 
             # # Flatten the data to a 1-D vector for the fully connected layer
-            fc1 = tf.contrib.layers.flatten(conv2)
+            fc1 = tf.contrib.layers.flatten(conv)
 
             # Apply Dropout (if is_training is False, dropout is not applied)
             fc1 = tf.layers.dropout(fc1, rate=dropout, training=is_training)
@@ -123,11 +136,11 @@ def conv_net(x, n_classes, dropout, reuse, is_training):
 
             print_op = tf.print("Shape of input: ", tf.shape(x))
             with tf.control_dependencies([]):
-                out = tf.layers.dense(fc1, 2048, activation=tf.nn.relu)
-                out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
-                out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
-                out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
-                out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
+                out = tf.layers.dense(fc1, 128, activation=tf.nn.relu)
+                out = tf.layers.dense(out, 128, activation=tf.nn.relu)
+                # out = tf.layers.dense(out, 128, activation=tf.nn.relu)
+                # out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
+                # out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
                 # out = tf.layers.dense(out, 2048, activation=tf.nn.relu)
                 out = tf.layers.dense(out, n_classes)
     return out
