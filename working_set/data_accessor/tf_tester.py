@@ -17,21 +17,30 @@ DATASET_LEN_Y = 24
 
 
 
-def fucking_wrapper():
-    modulation_targets = '32QAM', 'FM'
+# def fucking_wrapper():
+#     modulation_targets = '32QAM', 'FM'
 
-    snr_targets = [30]
+#     snr_targets = [30]
 
-    ds_accessor = Deepsig_Accessor(
-        modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
+#     ds_accessor = Deepsig_Accessor(
+#         modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
     
-    ds_training_generator = ds_accessor.get_training_generator()
+#     ds_training_generator = ds_accessor.get_training_generator()
 
-    return ds_training_generator
+#     return ds_training_generator
+
+modulation_targets = '32QAM', 'FM'
+
+snr_targets = [30]
+
+ds_accessor = Deepsig_Accessor(
+    modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
 
 ds = tf.data.Dataset.from_generator(
-    fucking_wrapper, (tf.float32, tf.int64), (tf.TensorShape([DATASET_LEN_X]), tf.TensorShape([DATASET_LEN_Y])))
+    ds_accessor.get_training_generator, (tf.float32, tf.int64), (tf.TensorShape([DATASET_LEN_X]), tf.TensorShape([DATASET_LEN_Y])))
 
+total_elements = 0
+for value in ds:
+  total_elements += 1
 
-for value in ds.take(1):
-  print(value)
+print(total_elements)
