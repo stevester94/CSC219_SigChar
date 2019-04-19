@@ -24,12 +24,16 @@ Project: https://github.com/aymericdamien/TensorFlow-Examples/
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
-#################################
-# Begin Build training set
-#################################
+######################################
+# Begin Build training and test set
+######################################
 
 # Seed our randomizer for reproducability
 random.seed(1337)
+
+# Some info about our data
+DATASET_LEN_X = 2048
+DATASET_LEN_Y = 24
 
 all_modulation_targets = ['32PSK', '16APSK', '32QAM', 'FM', 'GMSK', '32APSK', 'OQPSK', '8ASK', 'BPSK', '8PSK', 'AM-SSB-SC', '4ASK',
                           '16PSK', '64APSK', '128QAM', '128APSK', 'AM-DSB-SC', 'AM-SSB-WC', '64QAM', 'QPSK', '256QAM', 'AM-DSB-WC', 'OOK', '16QAM']
@@ -48,16 +52,24 @@ all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
 modulation_targets = all_modulation_targets
 snr_targets = [6]
 
-batch_size = 100
+batch_size = 200
 train_test_ratio = 0.75
 
-ds_accessor = Deepsig_Accessor(modulation_targets, snr_targets, batch_size, train_test_ratio, throw_after_epoch=True, shuffle=False)
+ds_accessor = Deepsig_Accessor(modulation_targets, snr_targets, train_test_ratio, batch_size, throw_after_epoch=False)
+
+train_ds = tf.data.Dataset.from_generator(
+    ds_accessor.get_training_generator, (tf.float32, tf.int64), (tf.TensorShape([DATASET_LEN_X]), tf.TensorShape([DATASET_LEN_Y])))
+train_ds = train_ds.batch(batch_size)
+train_ds = train_ds.prefetch(batch_size).cache(filename='/tmp/train_ds')
+
+test_ds = tf.data.Dataset.from_generator(
+    ds_accessor.get_testing_generator, (tf.float32, tf.int64), (tf.TensorShape([DATASET_LEN_X]), tf.TensorShape([DATASET_LEN_Y])))
+test_ds = test_ds.batch(batch_size)
+test_ds = test_ds.prefetch(batch_size).cache(filename='/tmp/test_ds')
 
 print("Num training elements: %d" % ds_accessor.get_total_num_training_samples())
 
-# Some info about our data
-DATASET_LEN_X = 2048
-DATASET_LEN_Y = 24
+
 
 #############################
 # End Build training set
@@ -145,21 +157,28 @@ logits_node, train_node, loss_node = build_model(x, y, network_conv_settings, ne
 init_op = tf.global_variables_initializer()
 
 
-
+iterator = train_ds.make_one_shot_iterator()
+data_iter_node = iterator.get_next()
 
 with tf.Session() as sess:
     # initialise the variables
     sess.run(init_op)
 
     for epoch in range(num_train_epochs):
-        try:
-            while True:  # I realize now this is a bad anti-pattern, oh well
-                train_batch = ds_accessor.get_next_train_batch()
+        while True:
+            try:
+                val = sess.run([data_iter_node])
+
+                # print(val[0][0])
+
+                x_train = val[0][0]
+                y_train = val[0][1]
                 _, c = sess.run([train_node, loss_node],
-                                feed_dict={x: train_batch[0], y: train_batch[1]})
-        except StopIteration:
-            pass
-            print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(c))
+                                feed_dict={x: x_train, y: y_train})
+            except tf.errors.OutOfRangeError:
+                break
+
+        print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(c))
 
     ##############
     # Test model

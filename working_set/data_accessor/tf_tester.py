@@ -36,11 +36,55 @@ snr_targets = [30]
 ds_accessor = Deepsig_Accessor(
     modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
 
-ds = tf.data.Dataset.from_generator(
-    ds_accessor.get_training_generator, (tf.float32, tf.int64), (tf.TensorShape([DATASET_LEN_X]), tf.TensorShape([DATASET_LEN_Y])))
 
-total_elements = 0
-for value in ds:
-  total_elements += 1
+# Build the god damn thing
+with tf.python_io.TFRecordWriter('fugg.tfrecord') as writer:
 
-print(total_elements)
+    for sample in ds_accessor.get_training_generator():
+
+        train_x_list = tf.train.FloatList(value=sample[0])
+        train_y_list = tf.train.Int64List(value=sample[1])
+
+
+        X = tf.train.Feature(float_list=train_x_list)
+        Y = tf.train.Feature(int64_list=train_y_list)
+
+        train_dict = {
+            'X': X,
+            'Y': Y
+        }
+        features = tf.train.Features(feature=train_dict)
+
+        example = tf.train.Example(features=features)
+
+        writer.write(example.SerializeToString())
+
+def transform_to_orig(proto):
+    features = {
+        'X':         tf.VarLenFeature(tf.float32),
+        'Y':        tf.VarLenFeature(tf.int64)
+    }
+
+    parsed_features = tf.parse_single_example(proto, features)
+
+    X = tf.sparse_tensor_to_dense(parsed_features['X'])
+    Y = tf.sparse_tensor_to_dense(parsed_features['Y'])
+
+    X = tf.reshape(X, [DATASET_LEN_X])
+    Y = tf.reshape(Y, [DATASET_LEN_Y])
+
+    return X,Y
+
+
+ds = tf.data.TFRecordDataset("fugg.tfrecord").map(transform_to_orig)
+
+
+total_len = 0
+for i in ds:
+    print(i)
+    total_len += 1
+
+print(total_len)
+
+
+
