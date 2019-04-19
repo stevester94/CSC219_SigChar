@@ -337,7 +337,7 @@ class Deepsig_Accessor:
         ret_iq = []
         ret_labels = []
 
-        print("[Deepsign_Accessor] - generate_batch_output_from_indices_list")
+        # print("[Deepsign_Accessor] - generate_batch_output_from_indices_list")
         # Begin the cache bullshit
         # We want to break the target indices into somewhat contiguous regions so that we can 
         # access efficiently form the shitty hdf5 file
@@ -357,8 +357,8 @@ class Deepsig_Accessor:
                 indices_in_this_cache.append(indices[j])
                 j += 1
             
-            print("[Deepsign_Accessor] - new cache - range: [%d,%d], num indices: [%d]" 
-                % (cache_start_index, cache_end_index, len(indices_in_this_cache)))
+            # print("[Deepsign_Accessor] - new cache - range: [%d,%d], num indices: [%d]" 
+            #     % (cache_start_index, cache_end_index, len(indices_in_this_cache)))
 
             # At this point we have our maximum cache size (or have hit the end of our indices)
             cache_x = self.deep_sig_file["X"][cache_start_index:cache_end_index+1]
@@ -415,64 +415,92 @@ class Deepsig_Accessor:
 
     def get_total_num_testing_samples(self):
             return len(self.test_indices)
+    
+    def get_training_generator(self):
+        for _ in range(0, self.num_train_batches):
+            current_batch = self.get_next_train_batch()
+            for i in range(0,len(current_batch[0])):
+                yield (current_batch[0][i], current_batch[1][i])
+
+    def get_testing_generator(self):
+        for _ in range(0, self.num_test_batches):
+            current_batch = self.get_next_test_batch()
+            for i in range(0, len(current_batch[0])):
+                yield (current_batch[0][i], current_batch[1][i])
+        
 
 if __name__ == '__main__':
     modulation_targets = '32QAM', 'FM'
     snr_targets = [30]
 
-    def old_school_time_trial():
-        dataset = get_data_samples(modulation_targets, snr_targets)
-        train_x = []
-        train_y = []
-        test_x = []
-        test_y = []
-        set_split_point = int(len(dataset)*0.75)
+    ds_accessor = Deepsig_Accessor(
+        modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
 
-        for i in range(0, set_split_point):
-            train_x.append(dataset[i][0])
-            train_y.append(dataset[i][2])
+    ds_training_generator = ds_accessor.get_training_generator()
 
-        for i in range(set_split_point, len(dataset)):
-            test_x.append(dataset[i][0])
-            test_y.append(dataset[i][2])
+    train_total_len = 0
+    for t in ds_training_generator:
+        train_total_len += 1
+    
+    print("Total train len: %d" % train_total_len)
+    print("Should have training samples: %d" % ds_accessor.get_total_num_training_samples())
+    #     print("Should have testing samples: %d" % ds_accessor.get_total_num_testing_samples())
 
-        print("Num old school training samples: %d" % len(train_x))
-        print("Num old school test samples: %d" % len(test_x))
 
-    def ds_accessor_time_trial():
 
-        ds_accessor = Deepsig_Accessor(
-            modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
+    # def old_school_time_trial():
+    #     dataset = get_data_samples(modulation_targets, snr_targets)
+    #     train_x = []
+    #     train_y = []
+    #     test_x = []
+    #     test_y = []
+    #     set_split_point = int(len(dataset)*0.75)
+
+    #     for i in range(0, set_split_point):
+    #         train_x.append(dataset[i][0])
+    #         train_y.append(dataset[i][2])
+
+    #     for i in range(set_split_point, len(dataset)):
+    #         test_x.append(dataset[i][0])
+    #         test_y.append(dataset[i][2])
+
+    #     print("Num old school training samples: %d" % len(train_x))
+    #     print("Num old school test samples: %d" % len(test_x))
+
+    # def ds_accessor_time_trial():
+
+    #     ds_accessor = Deepsig_Accessor(
+    #         modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
         
-        all_train_batches_lens = 0
-        all_test_batches_lens  = 0
+    #     all_train_batches_lens = 0
+    #     all_test_batches_lens  = 0
 
-        print("Getting all training batches")
-        while(True):
-            try:
-                all_train_batches_lens += len(ds_accessor.get_next_train_batch()[0])
-            except StopIteration:
-                break
+    #     print("Getting all training batches")
+    #     while(True):
+    #         try:
+    #             all_train_batches_lens += len(ds_accessor.get_next_train_batch()[0])
+    #         except StopIteration:
+    #             break
         
-        print("Getting all testing batches")
-        while(True):
-            try:
-                all_test_batches_lens += len(ds_accessor.get_next_test_batch()[0])
-            except StopIteration:
-                break
+    #     print("Getting all testing batches")
+    #     while(True):
+    #         try:
+    #             all_test_batches_lens += len(ds_accessor.get_next_test_batch()[0])
+    #         except StopIteration:
+    #             break
         
 
-        print("Num new school training samples: %d" % all_train_batches_lens)
-        print("Num new school test samples: %d" % all_test_batches_lens)
-        print("Should have training samples: %d" % ds_accessor.get_total_num_training_samples())
-        print("Should have testing samples: %d" % ds_accessor.get_total_num_testing_samples())
+    #     print("Num new school training samples: %d" % all_train_batches_lens)
+    #     print("Num new school test samples: %d" % all_test_batches_lens)
+    #     print("Should have training samples: %d" % ds_accessor.get_total_num_training_samples())
+    #     print("Should have testing samples: %d" % ds_accessor.get_total_num_testing_samples())
 
-        assert(all_train_batches_lens == ds_accessor.get_total_num_training_samples())
-        assert(all_test_batches_lens == ds_accessor.get_total_num_testing_samples())
-        print("DS accessor working as intended!")
+    #     assert(all_train_batches_lens == ds_accessor.get_total_num_training_samples())
+    #     assert(all_test_batches_lens == ds_accessor.get_total_num_testing_samples())
+    #     print("DS accessor working as intended!")
 
-    print("Old School time: %f" % timeit.timeit(old_school_time_trial, number=1))
-    print("ds_accessor time: %f" % timeit.timeit(ds_accessor_time_trial, number=1000))
+    # print("Old School time: %f" % timeit.timeit(old_school_time_trial, number=1))
+    # print("ds_accessor time: %f" % timeit.timeit(ds_accessor_time_trial, number=1000))
 
-    # Just leave this for debugging
-    f = h5py.File(deepsig_filename, 'r')
+    # # Just leave this for debugging
+    # f = h5py.File(deepsig_filename, 'r')
