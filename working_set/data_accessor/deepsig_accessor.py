@@ -291,6 +291,8 @@ class Deepsig_Accessor:
                     self.deep_sig_file, snr, boundaries[0], boundaries[1], True)
 
                 assert(len(boundaries) == 2)
+
+                print(boundaries)
                 
                 # Build up our indices, +1 the end because our boundaries are inclusive while range is not
                 target_indices += list(range(boundaries[0], boundaries[1]+1))
@@ -298,6 +300,8 @@ class Deepsig_Accessor:
         # Shuffle them immediately
         if shuffle:
             random.shuffle(target_indices)
+        else:
+            print("[Deepsign_Accessor] - Warning, data will not be shuffled! (You probably don't want this)")
 
         # Split the data into training and test
         target_indices_split_point = int(len(target_indices)*train_test_ratio)
@@ -329,16 +333,47 @@ class Deepsig_Accessor:
         return batch_indices_list
 
     def generate_batch_output_from_indices_list(self, indices):
+        MAX_CACHE_SIZE = 4095 #This is the size of one SNR group
         ret_iq = []
         ret_labels = []
 
-        for i in indices:
-            iq = self.deep_sig_file["X"][i]
-            flattened_iq = flatten_data_sample(iq)
-            one_hot_encoding = self.deep_sig_file["Y"][i]
+        print("[Deepsign_Accessor] - generate_batch_output_from_indices_list")
+        # Begin the cache bullshit
+        # We want to break the target indices into somewhat contiguous regions so that we can 
+        # access efficiently form the shitty hdf5 file
+        indices.sort()
 
-            ret_iq.append(flattened_iq)
-            ret_labels.append(one_hot_encoding)
+        j = 0
+        while j < len(indices):
+
+            # Calculate the range of the erm, range, from the hdf5 file we will read
+            cache_start_index = indices[j]
+            cache_end_index   = cache_start_index
+            indices_in_this_cache = [cache_start_index] # First index requested is of course in the line
+            
+            j += 1
+            while (j < len(indices)) and (indices[j] - cache_start_index <= MAX_CACHE_SIZE):
+                cache_end_index = indices[j]
+                indices_in_this_cache.append(indices[j])
+                j += 1
+            
+            print("[Deepsign_Accessor] - new cache - range: [%d,%d], num indices: [%d]" 
+                % (cache_start_index, cache_end_index, len(indices_in_this_cache)))
+
+            # At this point we have our maximum cache size (or have hit the end of our indices)
+            cache_x = self.deep_sig_file["X"][cache_start_index:cache_end_index+1]
+            cache_y = self.deep_sig_file["Y"][cache_start_index:cache_end_index+1]
+
+            for i in indices_in_this_cache:
+                # Need to offset that since we're indexing into our cache instead of the file
+                cache_index = i - cache_start_index 
+
+                iq = cache_x[cache_index]
+                flattened_iq = flatten_data_sample(iq)
+                one_hot_encoding = cache_y[cache_index]
+
+                ret_iq.append(flattened_iq)
+                ret_labels.append(one_hot_encoding)
         
         return (ret_iq, ret_labels)
 
@@ -354,7 +389,6 @@ class Deepsig_Accessor:
 
         # Increment our current batch number and wrap if necessary, indicating an epoch
         self.current_train_batch_number += 1
-
 
         return self.generate_batch_output_from_indices_list(batch_indices_list)
         
@@ -405,14 +439,10 @@ if __name__ == '__main__':
         print("Num old school training samples: %d" % len(train_x))
         print("Num old school test samples: %d" % len(test_x))
 
-    ds_accessor = None
-
-    def ds_accessor_constructor_time_trial():
-        global ds_accessor
-        ds_accessor = Deepsig_Accessor(
-            modulation_targets, snr_targets, 0.75, batch_size=None, throw_after_epoch=True, shuffle=False)
-
     def ds_accessor_time_trial():
+
+        ds_accessor = Deepsig_Accessor(
+            modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
         
         all_train_batches_lens = 0
         all_test_batches_lens  = 0
@@ -434,13 +464,15 @@ if __name__ == '__main__':
 
         print("Num new school training samples: %d" % all_train_batches_lens)
         print("Num new school test samples: %d" % all_test_batches_lens)
-        
-        # assert(all_train_batches_lens == ds_accessor.get_total_num_training_samples())
-        # assert(all_test_batches_lens == ds_accessor.get_total_num_testing_samples())
-        # print("DS accessor working as intended!")
+        print("Should have training samples: %d" % ds_accessor.get_total_num_training_samples())
+        print("Should have testing samples: %d" % ds_accessor.get_total_num_testing_samples())
+
+        assert(all_train_batches_lens == ds_accessor.get_total_num_training_samples())
+        assert(all_test_batches_lens == ds_accessor.get_total_num_testing_samples())
+        print("DS accessor working as intended!")
 
     print("Old School time: %f" % timeit.timeit(old_school_time_trial, number=1))
-    print("ds_accessor constructor time: %f" %
-          timeit.timeit(ds_accessor_constructor_time_trial, number=1))
-    print("ds_accessor time: %f" % timeit.timeit(ds_accessor_time_trial, number=1))
+    print("ds_accessor time: %f" % timeit.timeit(ds_accessor_time_trial, number=1000))
 
+    # Just leave this for debugging
+    f = h5py.File(deepsig_filename, 'r')
