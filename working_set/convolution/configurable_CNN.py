@@ -50,22 +50,62 @@ all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
 
 
 modulation_targets = all_modulation_targets
-snr_targets = [6]
+snr_targets = all_snr_targets
 
 batch_size = 200
 train_test_ratio = 0.75
 
 ds_accessor = Deepsig_Accessor(modulation_targets, snr_targets, train_test_ratio, batch_size, throw_after_epoch=False)
 
-train_ds = tf.data.Dataset.from_generator(
-    ds_accessor.get_training_generator, (tf.float32, tf.int64), (tf.TensorShape([DATASET_LEN_X]), tf.TensorShape([DATASET_LEN_Y])))
+
+# Build the god damn thing
+with tf.python_io.TFRecordWriter('_train.tfrecord') as writer:
+
+    for sample in ds_accessor.get_training_generator():
+
+        train_x_list = tf.train.FloatList(value=sample[0])
+        train_y_list = tf.train.Int64List(value=sample[1])
+
+        X = tf.train.Feature(float_list=train_x_list)
+        Y = tf.train.Feature(int64_list=train_y_list)
+
+        train_dict = {
+            'X': X,
+            'Y': Y
+        }
+        features = tf.train.Features(feature=train_dict)
+
+        example = tf.train.Example(features=features)
+
+        writer.write(example.SerializeToString())
+
+
+def transform_to_orig(proto):
+    features = {
+        'X':         tf.VarLenFeature(tf.float32),
+        'Y':        tf.VarLenFeature(tf.int64)
+    }
+
+    parsed_features = tf.parse_single_example(proto, features)
+
+    X = tf.sparse_tensor_to_dense(parsed_features['X'])
+    Y = tf.sparse_tensor_to_dense(parsed_features['Y'])
+
+    X = tf.reshape(X, [DATASET_LEN_X])
+    Y = tf.reshape(Y, [DATASET_LEN_Y])
+
+    return X, Y
+
+
+train_ds = tf.data.TFRecordDataset("_train.tfrecord").map(transform_to_orig)
+
 train_ds = train_ds.batch(batch_size)
-train_ds = train_ds.prefetch(batch_size).cache(filename='/tmp/train_ds')
+train_ds = train_ds.prefetch(batch_size)
 
 test_ds = tf.data.Dataset.from_generator(
     ds_accessor.get_testing_generator, (tf.float32, tf.int64), (tf.TensorShape([DATASET_LEN_X]), tf.TensorShape([DATASET_LEN_Y])))
 test_ds = test_ds.batch(batch_size)
-test_ds = test_ds.prefetch(batch_size).cache(filename='/tmp/test_ds')
+test_ds = test_ds.prefetch(batch_size)
 
 print("Num training elements: %d" % ds_accessor.get_total_num_training_samples())
 
@@ -157,19 +197,18 @@ logits_node, train_node, loss_node = build_model(x, y, network_conv_settings, ne
 init_op = tf.global_variables_initializer()
 
 
-iterator = train_ds.make_one_shot_iterator()
+iterator = train_ds.make_initializable_iterator()
 data_iter_node = iterator.get_next()
 
 with tf.Session() as sess:
-    # initialise the variables
+    # initialize the variables
     sess.run(init_op)
 
     for epoch in range(num_train_epochs):
+        sess.run(iterator.initializer)
         while True:
             try:
                 val = sess.run([data_iter_node])
-
-                # print(val[0][0])
 
                 x_train = val[0][0]
                 y_train = val[0][1]

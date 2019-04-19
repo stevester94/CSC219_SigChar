@@ -84,7 +84,7 @@ LEN_Y = 24
 # Training Parameters
 learning_rate = 0.001
 batch_size = 100
-num_train_epochs = 20
+num_train_epochs = 100
 
 # Network Parameters
 num_classes = len(train_y[0])

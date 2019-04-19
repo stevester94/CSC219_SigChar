@@ -38,7 +38,7 @@ ds_accessor = Deepsig_Accessor(
 
 
 # Build the god damn thing
-with tf.python_io.TFRecordWriter('fugg.tfrecord') as writer:
+with tf.python_io.TFRecordWriter('_train.tfrecord') as writer:
 
     for sample in ds_accessor.get_training_generator():
 
@@ -76,7 +76,7 @@ def transform_to_orig(proto):
     return X,Y
 
 
-ds = tf.data.TFRecordDataset("fugg.tfrecord").map(transform_to_orig)
+ds = tf.data.TFRecordDataset("_train.tfrecord").map(transform_to_orig)
 
 
 total_len = 0

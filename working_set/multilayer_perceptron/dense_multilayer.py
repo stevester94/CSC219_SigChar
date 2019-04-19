@@ -51,7 +51,7 @@ for i in range(set_split_point, len(dataset)):
 
 # Python optimisation variables
 learning_rate = 0.001 # Orignally 0.001 for Adam
-epochs = 5
+epochs = 100
 
 # Notes on identity function:
 # 10 works well for 1 hidden, not for 3
