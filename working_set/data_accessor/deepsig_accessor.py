@@ -3,6 +3,9 @@ import h5py
 import numpy as np
 from scipy.fftpack import fft
 import sys
+import random
+import math
+import timeit # For time testing
 
 deepsig_filename = "../../data_exploration/deepsig_data/GOLD_XYZ_OSC.0001_1024.hdf5"
 
@@ -254,15 +257,190 @@ def get_data_samples(modulations, SNRs, flatten_to_IQ=False):
 
     return ret_list
 
+# Use get_next_train_batch, or get_next_test_batch
+# Will return (features, one hot encoded labels)
+class Deepsig_Accessor:
+    def __init__(self, modulations, SNRs, train_test_ratio, batch_size, throw_after_epoch=False, shuffle=True):
+        self.batch_size = batch_size
+        self.throw_after_epoch = throw_after_epoch
+
+        self.current_test_batch_number = 0
+        self.test_indices = []
+        self.num_test_batches = None
+
+        self.current_train_batch_number = 0
+        self.train_indices = []
+        self.num_train_batches = None
+
+        random.seed(1337)
+
+        self.deep_sig_file = h5py.File(deepsig_filename, 'r')
+        deepsig_data_end_index = len(self.deep_sig_file["X"]) - 1
+
+        if batch_size == None:
+            self.batch_size = len(self.deep_sig_file["X"])
+
+        # Build our indices, keep a list of all indices that match our targets
+        target_indices = []
+        for mod in modulations:
+            for snr in SNRs:
+                print("Fetching %s at %ddB" % (mod, snr))
+                boundaries = find_boundaries_of_modulation(
+                    self.deep_sig_file, class_map[mod], 0, deepsig_data_end_index, True)
+                boundaries = find_boundaries_of_SNR(
+                    self.deep_sig_file, snr, boundaries[0], boundaries[1], True)
+
+                assert(len(boundaries) == 2)
+                
+                # Build up our indices, +1 the end because our boundaries are inclusive while range is not
+                target_indices += list(range(boundaries[0], boundaries[1]+1))
+        
+        # Shuffle them immediately
+        if shuffle:
+            random.shuffle(target_indices)
+
+        # Split the data into training and test
+        target_indices_split_point = int(len(target_indices)*train_test_ratio)
+
+        self.train_indices = target_indices[0:target_indices_split_point]
+        self.test_indices  = target_indices[target_indices_split_point:]
+
+        # print("[Deepsig_Accessor] - Total num training samples: %d" % len(self.train_indices))
+        # print("[Deepsig_Accessor] - Total num test samples: %d" % len(self.test_indices))
+
+        self.num_train_batches = math.ceil(len(self.train_indices)/self.batch_size)
+        self.num_test_batches = math.ceil(len(self.test_indices)/self.batch_size)
+
+    # Helper function used by both train and test
+    def compute_batch_indices(self, current_batch_number, indices_list, num_batches):
+        assert(current_batch_number < num_batches)
+
+        # Both begin and end are inclusive
+        begin = current_batch_number*self.batch_size
+
+        batch_indices_list = []
+        if current_batch_number != num_batches-1:
+            # Note, because list splising is exclusive on last item, we don't subtract by 1
+            end = begin+self.batch_size
+            batch_indices_list = indices_list[begin:end]
+        else:  # Edge case for last batch
+            batch_indices_list = indices_list[begin:]
+
+        return batch_indices_list
+
+    def generate_batch_output_from_indices_list(self, indices):
+        ret_iq = []
+        ret_labels = []
+
+        for i in indices:
+            iq = self.deep_sig_file["X"][i]
+            flattened_iq = flatten_data_sample(iq)
+            one_hot_encoding = self.deep_sig_file["Y"][i]
+
+            ret_iq.append(flattened_iq)
+            ret_labels.append(one_hot_encoding)
+        
+        return (ret_iq, ret_labels)
+
+    def get_next_train_batch(self):
+        if self.current_train_batch_number == self.num_train_batches:
+            if self.throw_after_epoch:
+                self.current_train_batch_number = 0
+                raise StopIteration
+            self.current_train_batch_number = 0
+        # print("Getting train batch %d" % self.current_train_batch_number)
+        # A list of indices of the deepsig file that correspond to the current batch
+        batch_indices_list = self.compute_batch_indices(self.current_train_batch_number, self.train_indices, self.num_train_batches)
+
+        # Increment our current batch number and wrap if necessary, indicating an epoch
+        self.current_train_batch_number += 1
+
+
+        return self.generate_batch_output_from_indices_list(batch_indices_list)
+        
+    def get_next_test_batch(self):
+        if self.current_test_batch_number == self.num_test_batches:
+            if self.throw_after_epoch:
+                self.current_test_batch_number = 0
+                raise StopIteration
+            self.current_test = 0
+        # print("Getting test batch %d" % self.current_test_batch_number)
+        # A list of indices of the deepsig file that correspond to the current batch
+        batch_indices_list = self.compute_batch_indices(
+            self.current_test_batch_number, self.test_indices, self.num_test_batches)
+
+        # Increment our current batch number and wrap if necessary, indicating an epoch
+        self.current_test_batch_number += 1
+
+
+        return self.generate_batch_output_from_indices_list(batch_indices_list)
+
+    def get_total_num_training_samples(self):
+        return len(self.train_indices)
+
+
+    def get_total_num_testing_samples(self):
+            return len(self.test_indices)
 
 if __name__ == '__main__':
-    # modulation_boundaries = find_boundaries_of_modulation(f, class_map["32QAM"], 0, len(f['X'])-1, True)
-    # SNR_boundaries = find_boundaries_of_SNR(f, 30, modulation_boundaries[0], modulation_boundaries[1], True)
+    modulation_targets = '32QAM', 'FM'
+    snr_targets = [30]
 
-    # data_samples = get_data_samples(["32PSK", "OOK", "16QAM"], [30])
-    data_samples = get_data_samples(["32PSK"], [30], flatten_to_IQ=False)
-    # data_samples = get_data_samples([], [])
-    print("Length of data: %d" % len(data_samples))
+    def old_school_time_trial():
+        dataset = get_data_samples(modulation_targets, snr_targets)
+        train_x = []
+        train_y = []
+        test_x = []
+        test_y = []
+        set_split_point = int(len(dataset)*0.75)
 
-    f = h5py.File(deepsig_filename, 'r')
+        for i in range(0, set_split_point):
+            train_x.append(dataset[i][0])
+            train_y.append(dataset[i][2])
+
+        for i in range(set_split_point, len(dataset)):
+            test_x.append(dataset[i][0])
+            test_y.append(dataset[i][2])
+
+        print("Num old school training samples: %d" % len(train_x))
+        print("Num old school test samples: %d" % len(test_x))
+
+    ds_accessor = None
+
+    def ds_accessor_constructor_time_trial():
+        global ds_accessor
+        ds_accessor = Deepsig_Accessor(
+            modulation_targets, snr_targets, 0.75, batch_size=None, throw_after_epoch=True, shuffle=False)
+
+    def ds_accessor_time_trial():
+        
+        all_train_batches_lens = 0
+        all_test_batches_lens  = 0
+
+        print("Getting all training batches")
+        while(True):
+            try:
+                all_train_batches_lens += len(ds_accessor.get_next_train_batch()[0])
+            except StopIteration:
+                break
+        
+        print("Getting all testing batches")
+        while(True):
+            try:
+                all_test_batches_lens += len(ds_accessor.get_next_test_batch()[0])
+            except StopIteration:
+                break
+        
+
+        print("Num new school training samples: %d" % all_train_batches_lens)
+        print("Num new school test samples: %d" % all_test_batches_lens)
+        
+        # assert(all_train_batches_lens == ds_accessor.get_total_num_training_samples())
+        # assert(all_test_batches_lens == ds_accessor.get_total_num_testing_samples())
+        # print("DS accessor working as intended!")
+
+    print("Old School time: %f" % timeit.timeit(old_school_time_trial, number=1))
+    print("ds_accessor constructor time: %f" %
+          timeit.timeit(ds_accessor_constructor_time_trial, number=1))
+    print("ds_accessor time: %f" % timeit.timeit(ds_accessor_time_trial, number=1))
 

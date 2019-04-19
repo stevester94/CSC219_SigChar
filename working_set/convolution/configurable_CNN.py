@@ -4,7 +4,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 import tensorflow as tf
 # Import MNIST data
-import deepsig_accessor as ds_accessor
+from deepsig_accessor import Deepsig_Accessor
 import random
 from time import sleep
 import numpy as np
@@ -45,51 +45,29 @@ all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
                    26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2]
 
 
-modulation_targets = '32QAM', 'FM'
-snr_targets = [30]
+modulation_targets = all_modulation_targets
+snr_targets = [6]
 
+batch_size = 100
+train_test_ratio = 0.75
 
-dataset = ds_accessor.get_data_samples(modulation_targets, snr_targets)
-random.shuffle(dataset)
+ds_accessor = Deepsig_Accessor(modulation_targets, snr_targets, batch_size, train_test_ratio, throw_after_epoch=True, shuffle=False)
 
-train_x = []
-train_y = []
-test_x = []
-test_y = []
-set_split_point = int(len(dataset)*0.75)
-
-for i in range(0, set_split_point):
-    train_x.append(dataset[i][0])
-    train_y.append(dataset[i][2])
-
-for i in range(set_split_point, len(dataset)):
-    test_x.append(dataset[i][0])
-    test_y.append(dataset[i][2])
-
-print("Num training samples: %d" % len(train_x))
-print("Num test samples: %d" % len(test_x))
-
-train_x = np.array(train_x)
-train_y = np.array(train_y)
-test_x = np.array(test_x)
-test_y = np.array(test_y)
+print("Num training elements: %d" % ds_accessor.get_total_num_training_samples())
 
 # Some info about our data
-LEN_X = 2048
-LEN_Y = 24
+DATASET_LEN_X = 2048
+DATASET_LEN_Y = 24
 
 #############################
 # End Build training set
 #############################
 
+######################
 # Training Parameters
+######################
 learning_rate = 0.001
-batch_size = 100
-num_train_epochs = 500
-
-# Network Parameters
-network_num_classes = len(train_y[0])
-
+num_train_epochs = 20
 
 #############################
 # Define the neural network #
@@ -118,7 +96,7 @@ def build_CNN_node(features, conv_settings, fc_settings, num_classes, reuse):
         # MNIST data input is a 1-D vector of 784 features (28*28 pixels)
         # Reshape to match picture format [Height x Width x Channel]
         # Tensor input become 4-D: [Batch Size, Height, Width, Channel]
-        layer = tf.reshape(features, shape=[-1, LEN_X, 1])
+        layer = tf.reshape(features, shape=[-1, DATASET_LEN_X, 1])
 
         for conv in conv_settings:
             # # Convolution Layer with 32 filters and a kernel size of 5
@@ -158,10 +136,10 @@ def build_model(features_placeholder, labels_placeholder, conv_settings, fc_sett
     return logits_node, train_node, loss_node
 
 
-x = tf.placeholder(tf.float32, [None, LEN_X])
-y = tf.placeholder(tf.float32, [None, LEN_Y])
+x = tf.placeholder(tf.float32, [None, DATASET_LEN_X])
+y = tf.placeholder(tf.float32, [None, DATASET_LEN_Y])
 
-logits_node, train_node, loss_node = build_model(x, y, network_conv_settings, network_fc_settings, network_num_classes)
+logits_node, train_node, loss_node = build_model(x, y, network_conv_settings, network_fc_settings, DATASET_LEN_Y)
 
 # finally setup the initialisation operator
 init_op = tf.global_variables_initializer()
@@ -174,10 +152,14 @@ with tf.Session() as sess:
     sess.run(init_op)
 
     for epoch in range(num_train_epochs):
-        _, c = sess.run([train_node, loss_node],
-                        feed_dict={x: train_x[0:50], y: train_y[0:50]})
-
-        print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(c))
+        try:
+            while True:  # I realize now this is a bad anti-pattern, oh well
+                train_batch = ds_accessor.get_next_train_batch()
+                _, c = sess.run([train_node, loss_node],
+                                feed_dict={x: train_batch[0], y: train_batch[1]})
+        except StopIteration:
+            pass
+            print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(c))
 
     ##############
     # Test model
@@ -193,4 +175,5 @@ with tf.Session() as sess:
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
     # Run the shit on our test sets
-    print("Accuracy:", accuracy.eval(feed_dict={x: test_x[0:50], y: test_y[0:50]}))
+    test_batch = ds_accessor.get_next_test_batch()
+    print("Accuracy:", accuracy.eval(feed_dict={x: test_batch[0], y: test_batch[1]}))
