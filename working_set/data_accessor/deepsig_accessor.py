@@ -130,7 +130,7 @@ def find_boundaries_of_SNR(hdf5_file, SNR, start_index, end_index, first_call=Fa
     # Base case, we've narrowed it down
     if end_index - start_index == 1:
         if class_of_start == class_of_end:
-            print("Hit the weird case of start and end being equal")
+            # print("Hit the weird case of start and end being equal")
             return start_index
         elif class_of_start == target_class: return start_index
         elif class_of_end  == target_class: return end_index
@@ -196,7 +196,7 @@ def find_an_index_of_modulation(hdf5_file, modulation, start_index, end_index):
     index_of_middle_of_current = int((end_index + start_index)/2)
     class_of_middle_of_current = hdf5_file['Y'][index_of_middle_of_current].tolist().index(1)
 
-    print("%d, %d, %d" % (start_index, index_of_middle_of_current, end_index))
+    # print("%d, %d, %d" % (start_index, index_of_middle_of_current, end_index))
 
     if class_of_middle_of_current == target_class:
         return index_of_middle_of_current
