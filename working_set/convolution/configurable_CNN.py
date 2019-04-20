@@ -28,7 +28,7 @@ tf.logging.set_verbosity(tf.logging.INFO)
 # Training Parameters
 ######################
 learning_rate = 0.001
-num_train_epochs = 100
+num_train_epochs = 10
 batch_size = 200
 
 ######################################
@@ -216,7 +216,8 @@ with tf.Session() as sess:
     ##############
 
     acc, acc_op = tf.metrics.accuracy(labels=tf.argmax(y, 1),
-                                        predictions=tf.argmax(logits_node, 1))
+                                      predictions=tf.argmax(tf.nn.softmax(logits_node), 1))
+
     sess.run(test_iterator.initializer)
 
     sess.run(tf.local_variables_initializer())
@@ -234,3 +235,30 @@ with tf.Session() as sess:
             break
 
     print("Final accuracy: %f" % sess.run(acc))
+
+    # # Softmax the output
+    # pred = tf.nn.softmax(logits_node)
+
+    # # For each categorical output, see if they're equal and return a tensor
+    # correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
+
+    # # Cast equality vector to float, take the mean of the whole thing
+    # accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+
+    # correct = 0
+    # total   = 0
+
+    # while True:
+    #     try:
+    #         val = sess.run([test_iter_node])
+
+    #         x_test = val[0][0]
+    #         y_test = val[0][1]
+
+    #         correct += sess.run([accuracy],
+    #                         feed_dict={x: x_test, y: y_test})[0]
+    #         total += 1
+    #     except tf.errors.OutOfRangeError:
+    #         break
+
+    # print("Final accuracy: %f" % (correct/total))
