@@ -61,11 +61,7 @@ limited_snr = [-20, -10, 0, 10, 20, 30]
 high_snr = [24, 26, 28, 30]
 thirty_snr = [30]
 
-
-modulation_targets = all_modulation_targets
-snr_targets = all_snr_targets
-
-target = (subset_modulation_targets, thirty_snr)
+target = (all_modulation_targets, limited_snr)
 
 def build_dataset_names(target):
     mod_names = '_'.join(mod for mod in target[0])
@@ -97,6 +93,7 @@ train_path = build_dataset_names(target)[0]
 test_path = build_dataset_names(target)[1]
 
 train_ds = tf.data.TFRecordDataset(train_path).map(transform_to_orig)
+train_ds = train_ds.shuffle(batch_size*50)
 train_ds = train_ds.batch(batch_size)
 train_ds = train_ds.prefetch(batch_size)
 
@@ -235,30 +232,3 @@ with tf.Session() as sess:
             break
 
     print("Final accuracy: %f" % sess.run(acc))
-
-    # # Softmax the output
-    # pred = tf.nn.softmax(logits_node)
-
-    # # For each categorical output, see if they're equal and return a tensor
-    # correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
-
-    # # Cast equality vector to float, take the mean of the whole thing
-    # accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-
-    # correct = 0
-    # total   = 0
-
-    # while True:
-    #     try:
-    #         val = sess.run([test_iter_node])
-
-    #         x_test = val[0][0]
-    #         y_test = val[0][1]
-
-    #         correct += sess.run([accuracy],
-    #                         feed_dict={x: x_test, y: y_test})[0]
-    #         total += 1
-    #     except tf.errors.OutOfRangeError:
-    #         break
-
-    # print("Final accuracy: %f" % (correct/total))

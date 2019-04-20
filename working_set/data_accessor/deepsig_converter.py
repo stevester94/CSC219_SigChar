@@ -31,6 +31,7 @@ all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
 
 limited_snr = [-20, -10, 0, 10, 20, 30]
 high_snr = [24, 26, 28, 30]
+thirty_snr = [30]
 
 subset_targets = []
 
@@ -48,11 +49,11 @@ subset_targets = []
 
 # subset_targets.append((subset_modulation_targets, all_snr_targets))
 # subset_targets.append((easy_modulation_targets, all_snr_targets))
-subset_targets.append((all_modulation_targets, all_snr_targets))
+# subset_targets.append((all_modulation_targets, all_snr_targets))
 
-# OG datasets
-# -rwxrwxrwx 1 steven steven  121791923 Apr 19 19: 08 32PSK_16APSK_32QAM_FM_GMSK_32APSK-20_-10_0_10_20_30_test.tfrecord*
-# -rwxrwxrwx 1 steven steven 1096127307 Apr 19 19: 08 32PSK_16APSK_32QAM_FM_GMSK_32APSK-20_-10_0_10_20_30_train.tfrecord*
+subset_targets.append((subset_modulation_targets, thirty_snr))
+
+
 
 
 

@@ -11,53 +11,55 @@ import numpy as np
 
 tf.enable_eager_execution()
 
+######################
+# Training Parameters
+######################
+learning_rate = 0.001
+num_train_epochs = 10
+batch_size = 200
+
+######################################
+# Begin Build training and test set
+######################################
+
+# Seed our randomizer for reproducability
+random.seed(1337)
+
+# Some info about our data
 DATASET_LEN_X = 2048
 DATASET_LEN_Y = 24
 
 
+BASE_DIR = "../../data_exploration/datasets/"
 
 
-# def fucking_wrapper():
-#     modulation_targets = '32QAM', 'FM'
+all_modulation_targets = ['32PSK', '16APSK', '32QAM', 'FM', 'GMSK', '32APSK', 'OQPSK', '8ASK', 'BPSK', '8PSK', 'AM-SSB-SC', '4ASK',
+                          '16PSK', '64APSK', '128QAM', '128APSK', 'AM-DSB-SC', 'AM-SSB-WC', '64QAM', 'QPSK', '256QAM', 'AM-DSB-WC', 'OOK', '16QAM']
+subset_modulation_targets = [
+    '32PSK', '16APSK', '32QAM', 'FM', 'GMSK', '32APSK']
 
-#     snr_targets = [30]
+easy_modulation_targets = ["OOK", "4ASK", "BPSK", "QPSK",
+                           "8PSK", "16QAM", "AM-SSB-SC", "AM-DSB-SC", "FM", "GMSK", "OQPSK"]
 
-#     ds_accessor = Deepsig_Accessor(
-#         modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
-    
-#     ds_training_generator = ds_accessor.get_training_generator()
-
-#     return ds_training_generator
-
-modulation_targets = '32QAM', 'FM'
-
-snr_targets = [30]
-
-ds_accessor = Deepsig_Accessor(
-    modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
+all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
+                   26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2]
+limited_snr = [-20, -10, 0, 10, 20, 30]
+high_snr = [24, 26, 28, 30]
+thirty_snr = [30]
 
 
-# Build the god damn thing
-with tf.python_io.TFRecordWriter('_train.tfrecord') as writer:
-
-    for sample in ds_accessor.get_training_generator():
-
-        train_x_list = tf.train.FloatList(value=sample[0])
-        train_y_list = tf.train.Int64List(value=sample[1])
+target = (all_modulation_targets, all_snr_targets)
 
 
-        X = tf.train.Feature(float_list=train_x_list)
-        Y = tf.train.Feature(int64_list=train_y_list)
+def build_dataset_names(target):
+    mod_names = '_'.join(mod for mod in target[0])
+    snr_names = '_'.join(str(snr) for snr in target[1])
+    prelim_filename = BASE_DIR + mod_names + snr_names
 
-        train_dict = {
-            'X': X,
-            'Y': Y
-        }
-        features = tf.train.Features(feature=train_dict)
+    print("Using %s" % prelim_filename)
 
-        example = tf.train.Example(features=features)
+    return prelim_filename+"_train.tfrecord", prelim_filename+"_test.tfrecord"
 
-        writer.write(example.SerializeToString())
 
 def transform_to_orig(proto):
     features = {
@@ -73,18 +75,21 @@ def transform_to_orig(proto):
     X = tf.reshape(X, [DATASET_LEN_X])
     Y = tf.reshape(Y, [DATASET_LEN_Y])
 
-    return X,Y
+    return X, Y
 
 
-ds = tf.data.TFRecordDataset("_train.tfrecord").map(transform_to_orig)
+train_path = build_dataset_names(target)[0]
+test_path = build_dataset_names(target)[1]
+
+train_ds = tf.data.TFRecordDataset(train_path).map(transform_to_orig)
+train_ds = train_ds.shuffle(batch_size*20)
+train_ds = train_ds.batch(1)
+train_ds = train_ds.prefetch(batch_size)
+
+test_ds = tf.data.TFRecordDataset(test_path).map(transform_to_orig)
+test_ds = test_ds.batch(1)
+test_ds = test_ds.prefetch(batch_size)
 
 
-total_len = 0
-for i in ds:
-    print(i)
-    total_len += 1
-
-print(total_len)
-
-
-
+for i in train_ds:
+    print(i[1])
