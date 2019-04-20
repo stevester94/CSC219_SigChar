@@ -28,7 +28,7 @@ tf.logging.set_verbosity(tf.logging.INFO)
 # Training Parameters
 ######################
 learning_rate = 0.001
-num_train_epochs = 1
+num_train_epochs = 100
 batch_size = 200
 
 ######################################
@@ -59,17 +59,20 @@ all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
                    26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2]
 limited_snr = [-20, -10, 0, 10, 20, 30]
 high_snr = [24, 26, 28, 30]
+thirty_snr = [30]
 
 
 modulation_targets = all_modulation_targets
 snr_targets = all_snr_targets
 
-target = (subset_modulation_targets, limited_snr)
+target = (subset_modulation_targets, thirty_snr)
 
 def build_dataset_names(target):
     mod_names = '_'.join(mod for mod in target[0])
     snr_names = '_'.join(str(snr) for snr in target[1])
     prelim_filename = BASE_DIR + mod_names + snr_names
+
+    print("Using %s" % prelim_filename)
 
     return prelim_filename+"_train.tfrecord", prelim_filename+"_test.tfrecord"
 
@@ -183,18 +186,21 @@ logits_node, train_node, loss_node = build_model(x, y, network_conv_settings, ne
 init_op = tf.global_variables_initializer()
 
 
-iterator = train_ds.make_initializable_iterator()
-data_iter_node = iterator.get_next()
+train_iterator = train_ds.make_initializable_iterator()
+train_iter_node = train_iterator.get_next()
+
+test_iterator = test_ds.make_initializable_iterator()
+test_iter_node = test_iterator.get_next()
 
 with tf.Session() as sess:
     # initialize the variables
     sess.run(init_op)
 
     for epoch in range(num_train_epochs):
-        sess.run(iterator.initializer)
+        sess.run(train_iterator.initializer)
         while True:
             try:
-                val = sess.run([data_iter_node])
+                val = sess.run([train_iter_node])
 
                 x_train = val[0][0]
                 y_train = val[0][1]
@@ -209,15 +215,22 @@ with tf.Session() as sess:
     # Test model
     ##############
 
-    # Softmax the output
-    pred = tf.nn.softmax(logits_node)
+    acc, acc_op = tf.metrics.accuracy(labels=tf.argmax(y, 1),
+                                        predictions=tf.argmax(logits_node, 1))
+    sess.run(test_iterator.initializer)
 
-    # For each categorical output, see if they're equal and return a tensor
-    correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
+    sess.run(tf.local_variables_initializer())
 
-    # Cast equality vector to float, take the mean of the whole thing
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+    while True:
+        try:
+            val = sess.run([test_iter_node])
 
-    # Run the shit on our test sets
-    test_batch = ds_accessor.get_next_test_batch()
-    print("Accuracy:", accuracy.eval(feed_dict={x: test_batch[0], y: test_batch[1]}))
+            x_test = val[0][0]
+            y_test = val[0][1]
+
+            sess.run([acc_op],
+                            feed_dict={x: x_test, y: y_test})
+        except tf.errors.OutOfRangeError:
+            break
+
+    print("Final accuracy: %f" % sess.run(acc))
