@@ -24,6 +24,13 @@ Project: https://github.com/aymericdamien/TensorFlow-Examples/
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
+######################
+# Training Parameters
+######################
+learning_rate = 0.001
+num_train_epochs = 1
+batch_size = 200
+
 ######################################
 # Begin Build training and test set
 ######################################
@@ -35,6 +42,11 @@ random.seed(1337)
 DATASET_LEN_X = 2048
 DATASET_LEN_Y = 24
 
+
+
+BASE_DIR = "../../data_exploration/datasets/"
+
+
 all_modulation_targets = ['32PSK', '16APSK', '32QAM', 'FM', 'GMSK', '32APSK', 'OQPSK', '8ASK', 'BPSK', '8PSK', 'AM-SSB-SC', '4ASK',
                           '16PSK', '64APSK', '128QAM', '128APSK', 'AM-DSB-SC', 'AM-SSB-WC', '64QAM', 'QPSK', '256QAM', 'AM-DSB-WC', 'OOK', '16QAM']
 subset_modulation_targets = [
@@ -43,42 +55,23 @@ subset_modulation_targets = [
 easy_modulation_targets = ["OOK", "4ASK", "BPSK", "QPSK",
                            "8PSK", "16QAM", "AM-SSB-SC", "AM-DSB-SC", "FM", "GMSK", "OQPSK"]
 
-toy_targets = ['32QAM', 'FM']
-
 all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
                    26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2]
+limited_snr = [-20, -10, 0, 10, 20, 30]
+high_snr = [24, 26, 28, 30]
 
 
 modulation_targets = all_modulation_targets
 snr_targets = all_snr_targets
 
-batch_size = 200
-train_test_ratio = 0.75
+target = (subset_modulation_targets, limited_snr)
 
-ds_accessor = Deepsig_Accessor(modulation_targets, snr_targets, train_test_ratio, batch_size, throw_after_epoch=False)
+def build_dataset_names(target):
+    mod_names = '_'.join(mod for mod in target[0])
+    snr_names = '_'.join(str(snr) for snr in target[1])
+    prelim_filename = BASE_DIR + mod_names + snr_names
 
-
-# Build the god damn thing
-with tf.python_io.TFRecordWriter('_train.tfrecord') as writer:
-
-    for sample in ds_accessor.get_training_generator():
-
-        train_x_list = tf.train.FloatList(value=sample[0])
-        train_y_list = tf.train.Int64List(value=sample[1])
-
-        X = tf.train.Feature(float_list=train_x_list)
-        Y = tf.train.Feature(int64_list=train_y_list)
-
-        train_dict = {
-            'X': X,
-            'Y': Y
-        }
-        features = tf.train.Features(feature=train_dict)
-
-        example = tf.train.Example(features=features)
-
-        writer.write(example.SerializeToString())
-
+    return prelim_filename+"_train.tfrecord", prelim_filename+"_test.tfrecord"
 
 def transform_to_orig(proto):
     features = {
@@ -97,29 +90,22 @@ def transform_to_orig(proto):
     return X, Y
 
 
-train_ds = tf.data.TFRecordDataset("_train.tfrecord").map(transform_to_orig)
+train_path = build_dataset_names(target)[0]
+test_path = build_dataset_names(target)[1]
 
+train_ds = tf.data.TFRecordDataset(train_path).map(transform_to_orig)
 train_ds = train_ds.batch(batch_size)
 train_ds = train_ds.prefetch(batch_size)
 
-test_ds = tf.data.Dataset.from_generator(
-    ds_accessor.get_testing_generator, (tf.float32, tf.int64), (tf.TensorShape([DATASET_LEN_X]), tf.TensorShape([DATASET_LEN_Y])))
+test_ds = tf.data.TFRecordDataset(test_path).map(transform_to_orig)
 test_ds = test_ds.batch(batch_size)
 test_ds = test_ds.prefetch(batch_size)
-
-print("Num training elements: %d" % ds_accessor.get_total_num_training_samples())
-
-
 
 #############################
 # End Build training set
 #############################
 
-######################
-# Training Parameters
-######################
-learning_rate = 0.001
-num_train_epochs = 20
+
 
 #############################
 # Define the neural network #

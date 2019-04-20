@@ -34,21 +34,21 @@ high_snr = [24, 26, 28, 30]
 
 subset_targets = []
 
-subset_targets.append((subset_modulation_targets, [30]))
-subset_targets.append((easy_modulation_targets, [30]))
-subset_targets.append((all_modulation_targets, [30]))
+# subset_targets.append((subset_modulation_targets, [30]))
+# subset_targets.append((easy_modulation_targets, [30]))
+# subset_targets.append((all_modulation_targets, [30]))
 
-subset_targets.append( (subset_modulation_targets, limited_snr) )
-subset_targets.append((easy_modulation_targets, limited_snr))
-subset_targets.append((all_modulation_targets, limited_snr))
+# subset_targets.append( (subset_modulation_targets, limited_snr) )
+# subset_targets.append((easy_modulation_targets, limited_snr))
+# subset_targets.append((all_modulation_targets, limited_snr))
 
-subset_targets.append((subset_modulation_targets, high_snr))
-subset_targets.append((easy_modulation_targets, high_snr))
-subset_targets.append((all_modulation_targets, high_snr))
+# subset_targets.append((subset_modulation_targets, high_snr))
+# subset_targets.append((easy_modulation_targets, high_snr))
+# subset_targets.append((all_modulation_targets, high_snr))
 
-subset_targets.append((subset_modulation_targets, all_snr_targets))
-subset_targets.append((easy_modulation_targets, all_snr_targets))
-# subset_targets.append((all_modulation_targets, all_snr_targets))
+# subset_targets.append((subset_modulation_targets, all_snr_targets))
+# subset_targets.append((easy_modulation_targets, all_snr_targets))
+subset_targets.append((all_modulation_targets, all_snr_targets))
 
 
 def transform_to_orig(proto):
