@@ -53,7 +53,7 @@ def find_boundaries_of_modulation(hdf5_file, modulation, start_index, end_index,
     # Base case, we've narrowed it down
     if end_index - start_index == 1:
         if class_of_start == class_of_end:
-            print("Hit the weird case of start and end being equal")
+            # print("Hit the weird case of start and end being equal")
             return start_index
 
         elif class_of_start == target_class: return start_index
@@ -229,7 +229,7 @@ def get_data_samples(modulations, SNRs, flatten_to_IQ=False):
 
     for mod in modulations:
         for snr in SNRs:
-            print("Fetching %s at %ddB" % (mod, snr))
+            # print("Fetching %s at %ddB" % (mod, snr))
             boundaries = find_boundaries_of_modulation(
                 f, class_map[mod], 0, deepsig_data_end_index, True)
             boundaries = find_boundaries_of_SNR(f, snr, boundaries[0], boundaries[1], True)
@@ -239,7 +239,7 @@ def get_data_samples(modulations, SNRs, flatten_to_IQ=False):
             # Get the data, and flatten it because the internal representation doesn't do complex
             deepsig_IQ = f["X"][boundaries[0]:boundaries[1]]
 
-            print("Flattening data")
+            # print("Flattening data")
             flattened_IQ = []
             for IQ in deepsig_IQ:
                 flattened_IQ.append(flatten_data_sample(IQ, flatten_to_IQ))
@@ -284,7 +284,7 @@ class Deepsig_Accessor:
         target_indices = []
         for mod in modulations:
             for snr in SNRs:
-                print("Fetching %s at %ddB" % (mod, snr))
+                # print("Fetching %s at %ddB" % (mod, snr))
                 boundaries = find_boundaries_of_modulation(
                     self.deep_sig_file, class_map[mod], 0, deepsig_data_end_index, True)
                 boundaries = find_boundaries_of_SNR(
@@ -292,7 +292,7 @@ class Deepsig_Accessor:
 
                 assert(len(boundaries) == 2)
 
-                print(boundaries)
+                # print(boundaries)
                 
                 # Build up our indices, +1 the end because our boundaries are inclusive while range is not
                 target_indices += list(range(boundaries[0], boundaries[1]+1))
@@ -428,6 +428,23 @@ class Deepsig_Accessor:
             for i in range(0, len(current_batch[0])):
                 yield (current_batch[0][i], current_batch[1][i])
         
+    def cksum_train_labels(self):
+        sum_y = self.deep_sig_file["Y"][self.train_indices[0]]
+
+        for y_index in self.train_indices[1:]:
+            # print(y)
+            sum_y += self.deep_sig_file["Y"][y_index]
+        
+        return sum_y
+
+    def cksum_test_labels(self):
+        sum_y = self.deep_sig_file["Y"][self.test_indices[0]]
+
+        for y_index in self.test_indices[1:]:
+            # print(y)
+            sum_y += self.deep_sig_file["Y"][y_index]
+
+        return sum_y
 
 if __name__ == '__main__':
     modulation_targets = '32QAM', 'FM'
@@ -436,71 +453,6 @@ if __name__ == '__main__':
     ds_accessor = Deepsig_Accessor(
         modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
 
-    ds_training_generator = ds_accessor.get_training_generator()
+    f = h5py.File(deepsig_filename, 'r')
 
-    train_total_len = 0
-    for t in ds_training_generator:
-        train_total_len += 1
-    
-    print("Total train len: %d" % train_total_len)
-    print("Should have training samples: %d" % ds_accessor.get_total_num_training_samples())
-    #     print("Should have testing samples: %d" % ds_accessor.get_total_num_testing_samples())
-
-
-
-    # def old_school_time_trial():
-    #     dataset = get_data_samples(modulation_targets, snr_targets)
-    #     train_x = []
-    #     train_y = []
-    #     test_x = []
-    #     test_y = []
-    #     set_split_point = int(len(dataset)*0.75)
-
-    #     for i in range(0, set_split_point):
-    #         train_x.append(dataset[i][0])
-    #         train_y.append(dataset[i][2])
-
-    #     for i in range(set_split_point, len(dataset)):
-    #         test_x.append(dataset[i][0])
-    #         test_y.append(dataset[i][2])
-
-    #     print("Num old school training samples: %d" % len(train_x))
-    #     print("Num old school test samples: %d" % len(test_x))
-
-    # def ds_accessor_time_trial():
-
-    #     ds_accessor = Deepsig_Accessor(
-    #         modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
-        
-    #     all_train_batches_lens = 0
-    #     all_test_batches_lens  = 0
-
-    #     print("Getting all training batches")
-    #     while(True):
-    #         try:
-    #             all_train_batches_lens += len(ds_accessor.get_next_train_batch()[0])
-    #         except StopIteration:
-    #             break
-        
-    #     print("Getting all testing batches")
-    #     while(True):
-    #         try:
-    #             all_test_batches_lens += len(ds_accessor.get_next_test_batch()[0])
-    #         except StopIteration:
-    #             break
-        
-
-    #     print("Num new school training samples: %d" % all_train_batches_lens)
-    #     print("Num new school test samples: %d" % all_test_batches_lens)
-    #     print("Should have training samples: %d" % ds_accessor.get_total_num_training_samples())
-    #     print("Should have testing samples: %d" % ds_accessor.get_total_num_testing_samples())
-
-    #     assert(all_train_batches_lens == ds_accessor.get_total_num_training_samples())
-    #     assert(all_test_batches_lens == ds_accessor.get_total_num_testing_samples())
-    #     print("DS accessor working as intended!")
-
-    # print("Old School time: %f" % timeit.timeit(old_school_time_trial, number=1))
-    # print("ds_accessor time: %f" % timeit.timeit(ds_accessor_time_trial, number=1000))
-
-    # # Just leave this for debugging
-    # f = h5py.File(deepsig_filename, 'r')
+    print("Y_cksum: " + str(ds_accessor.cksum_train_labels()))

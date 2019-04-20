@@ -66,9 +66,14 @@ def convert_hdf5_to_dataset_file(target):
     ds_accessor = Deepsig_Accessor(
         target[0], target[1], 0.9, batch_size=1, throw_after_epoch=True, shuffle=True)
 
+    print("Train count: %d" % ds_accessor.get_total_num_training_samples())
+    iteration_counter = 0
     with tf.python_io.TFRecordWriter(prelim_filename + '_train.tfrecord') as writer:
-        for sample in ds_accessor.get_training_generator():
 
+        for sample in ds_accessor.get_training_generator():
+            if iteration_counter % 1000 == 0:
+                print("At %d" % iteration_counter)
+            iteration_counter += 1
             train_x_list = tf.train.FloatList(value=sample[0])
             train_y_list = tf.train.Int64List(value=sample[1])
 
@@ -84,10 +89,13 @@ def convert_hdf5_to_dataset_file(target):
             example = tf.train.Example(features=features)
 
             writer.write(example.SerializeToString())
-
+    print("Test count: %d" % ds_accessor.get_total_num_testing_samples())
+    iteration_counter = 0
     with tf.python_io.TFRecordWriter(prelim_filename + '_test.tfrecord') as writer:
         for sample in ds_accessor.get_testing_generator():
-
+            if iteration_counter % 100 == 0:
+                print("At %d" % iteration_counter)
+            iteration_counter += 1
             train_x_list = tf.train.FloatList(value=sample[0])
             train_y_list = tf.train.Int64List(value=sample[1])
 
