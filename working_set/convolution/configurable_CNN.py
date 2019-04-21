@@ -3,15 +3,12 @@ from __future__ import division, print_function, absolute_import
 from tensorflow.examples.tutorials.mnist import input_data
 
 import tensorflow as tf
-# Import MNIST data
-from deepsig_accessor import Deepsig_Accessor
 import random
 from time import sleep
 import numpy as np
 import json
 from timeit import timeit
-from functools import partial
-
+import sys
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -142,6 +139,12 @@ def train_and_test(_sentinel_= None, learning_rate=None,
 
     logits_node, train_node, loss_node = build_model(x, y, network_conv_settings, network_fc_settings, DATASET_LEN_Y)
 
+    total_confusion = tf.Variable(tf.zeros(
+        [DATASET_LEN_Y, DATASET_LEN_Y],
+        dtype=tf.dtypes.int32,
+        name=None
+    ))
+
     # finally setup the initialisation operator
     init_op = tf.global_variables_initializer()
 
@@ -175,8 +178,25 @@ def train_and_test(_sentinel_= None, learning_rate=None,
         # Test model
         ##############
 
-        acc, acc_op = tf.metrics.accuracy(labels=tf.argmax(y, 1),
-                                        predictions=tf.argmax(tf.nn.softmax(logits_node), 1))
+        labels = tf.argmax(y, 1)
+        predictions = tf.argmax(tf.nn.softmax(logits_node), 1)
+
+        acc, acc_op = tf.metrics.accuracy(labels=labels,
+                                        predictions=predictions)
+
+        batch_confusion = tf.math.confusion_matrix(
+            labels,
+            predictions,
+            num_classes=DATASET_LEN_Y,
+            dtype=tf.dtypes.int32,
+            name=None,
+            weights=None
+        )
+
+
+
+        cumulate_confusion = tf.add(batch_confusion, total_confusion)
+        cumulate_confusion = tf.assign(total_confusion, cumulate_confusion)
 
         sess.run(test_iterator.initializer)
 
@@ -189,64 +209,22 @@ def train_and_test(_sentinel_= None, learning_rate=None,
                 x_test = val[0][0]
                 y_test = val[0][1]
 
-                sess.run([acc_op],
+                sess.run([acc_op, cumulate_confusion],
                                 feed_dict={x: x_test, y: y_test})
             except tf.errors.OutOfRangeError:
                 break
 
         print("Final accuracy: %f" % sess.run(acc))
+        print(sess.run(total_confusion))
         return sess.run(acc)
 
 
-######################
-# Training Parameters
-######################
 
 
-#############################
-# Target dataset parameters
-#############################
-all_modulation_targets = ['32PSK', '16APSK', '32QAM', 'FM', 'GMSK', '32APSK', 'OQPSK', '8ASK', 'BPSK', '8PSK', 'AM-SSB-SC', '4ASK',
-                          '16PSK', '64APSK', '128QAM', '128APSK', 'AM-DSB-SC', 'AM-SSB-WC', '64QAM', 'QPSK', '256QAM', 'AM-DSB-WC', 'OOK', '16QAM']
-subset_modulation_targets = [
-    '32PSK', '16APSK', '32QAM', 'FM', 'GMSK', '32APSK']
 
-easy_modulation_targets = ["OOK", "4ASK", "BPSK", "QPSK",
-                           "8PSK", "16QAM", "AM-SSB-SC", "AM-DSB-SC", "FM", "GMSK", "OQPSK"]
-
-all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
-                   26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2]
-limited_snr = [-20, -10, 0, 10, 20, 30]
-high_snr = [24, 26, 28, 30]
-thirty_snr = [30]
-
-target = (subset_modulation_targets, thirty_snr)
-
-
-#############################
-# Define the neural network 
-#############################
-default_conv_settings = {"conv_num_filters": 64, "conv_kernel_size": 3,
-                         "max_pool_stride": 2, "max_pool_kernel_size": 2}
-default_fc_settings = {"fc_num_nodes": 128}
-
-network_conv_settings = []
-for i in range(0, 7):
-    network_conv_settings.append(default_conv_settings)
-
-network_fc_settings = []
-for i in range(0, 2):
-    network_fc_settings.append(default_fc_settings)
-
-parameters_dict = {
-    "learning_rate": 0.001,
-    "num_train_epochs": 1,
-    "batch_size": 200,
-    "target": target,
-    "network_conv_settings": network_conv_settings,
-    "network_fc_settings": network_fc_settings
-}
-
+#############################################################
+# DO THE THING, this is ran from CLI now, via test_runner
+#############################################################
 def train_test_time(parameters_dict):
     accuracy = None
 
@@ -262,11 +240,19 @@ def train_test_time(parameters_dict):
 
     time = timeit(wrapper, number=1)
 
-    parameters_dict["accuracy"] = accuracy
-    parameters_dict["time"] = time
+    parameters_dict["accuracy"] = str(accuracy)
+    parameters_dict["time"] = str(time)
 
     return parameters_dict
 
+if __name__ == "__main__":
+    str_case = sys.argv[1]
 
-results = train_test_time(parameters_dict)
-print(results)
+    case = json.loads(str_case)
+
+    results = train_test_time(case)
+
+    with open("test_results.json", "a") as f:
+        f.write(json.dumps(results))
+        f.write("\n\n")
+
