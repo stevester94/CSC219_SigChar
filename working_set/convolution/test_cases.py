@@ -16,6 +16,28 @@ high_snr = [24, 26, 28, 30]
 thirty_snr = [30]
 
 
+OTA_ARCH = {
+    "learning_rate": 0.001,
+    "num_train_epochs": 100,
+    "batch_size": 100,
+    "target": (all_modulation_targets, limited_snr),
+    "network_conv_settings": [
+        {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+        {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+        {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+        {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+        {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+        {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+        {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+    ],
+    "network_fc_settings": [
+        {"fc_num_nodes": 128},
+        {"fc_num_nodes": 128},
+        {"fc_num_nodes": 128},
+        {"fc_num_nodes": 128}
+    ]
+}
+
 
 def get_test_cases():
     test_cases = []
