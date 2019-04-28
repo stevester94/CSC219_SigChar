@@ -155,15 +155,45 @@ def get_toy_test_cases():
     }
     test_cases.append(parameters_dict)
 
+    # parameters_dict = {
+    #     "label": "toy case2",
+    #     "learning_rate": 0.001,
+    #     "num_train_epochs": 1,
+    #     "batch_size": 100,
+    #     "target": (all_modulation_targets, thirty_snr),
+    #     "network_conv_settings": [
+    #     ],
+    #     "network_fc_settings": [
+    #     ]
+    # }
+    # test_cases.append(parameters_dict)
+
+    return test_cases
+
+def get_robust_easy():
+    test_cases = []
+
+
     parameters_dict = {
-        "label": "toy case2",
         "learning_rate": 0.001,
-        "num_train_epochs": 1,
+        "num_train_epochs": 10,
         "batch_size": 100,
-        "target": (all_modulation_targets, thirty_snr),
+        "target": (subset_modulation_targets, thirty_snr),
+        "label": "robust toy",
         "network_conv_settings": [
+            {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2}
         ],
         "network_fc_settings": [
+            {"fc_num_nodes": 128},
+            {"fc_num_nodes": 128},
+            {"fc_num_nodes": 128},
+            {"fc_num_nodes": 128}
         ]
     }
     test_cases.append(parameters_dict)

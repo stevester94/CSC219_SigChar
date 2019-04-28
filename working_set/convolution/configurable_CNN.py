@@ -110,7 +110,7 @@ def train_and_test(_sentinel_= None, learning_rate=None,
                 layer = tf.layers.dense(
                     layer, fc["fc_num_nodes"], activation=tf.nn.relu)
 
-            layer = tf.layers.dense(layer, num_classes)
+            layer = tf.layers.dense(layer, num_classes, name="cnn_logits_out")
         return layer
 
 
@@ -134,10 +134,14 @@ def train_and_test(_sentinel_= None, learning_rate=None,
         return logits_node, train_node, loss_node
 
 
-    x = tf.placeholder(tf.float32, [None, DATASET_LEN_X])
-    y = tf.placeholder(tf.float32, [None, DATASET_LEN_Y])
+    x = tf.placeholder(tf.float32, [None, DATASET_LEN_X], name="x_placeholder")
+    y = tf.placeholder(tf.float32, [None, DATASET_LEN_Y], name="y_placeholder")
 
     logits_node, train_node, loss_node = build_model(x, y, network_conv_settings, network_fc_settings, DATASET_LEN_Y)
+
+    # This is a kludge becuase I don't know how to access the the logits directly
+    # Used only  for transfer learning (IE, when you import this op is how you exercise the model)
+    soft_prediction = tf.nn.softmax(logits_node, name="soft_predict")
 
     total_confusion = tf.Variable(tf.zeros(
         [DATASET_LEN_Y, DATASET_LEN_Y],
@@ -154,6 +158,10 @@ def train_and_test(_sentinel_= None, learning_rate=None,
 
     test_iterator = test_ds.make_initializable_iterator()
     test_iter_node = test_iterator.get_next()
+
+    # We're gonna save the entire model for later use
+    EXPORT_DIR = "/tmp/fuckin_save/"
+    builder = tf.saved_model.builder.SavedModelBuilder(EXPORT_DIR)
 
     with tf.Session() as sess:
         # initialize the variables
@@ -173,6 +181,21 @@ def train_and_test(_sentinel_= None, learning_rate=None,
                     break
 
             print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(c))
+
+        # Done training
+        builder.add_meta_graph_and_variables(
+            sess,
+            ["fuck"], # Not sure on this one
+            signature_def_map=None,
+            assets_collection=None,
+            legacy_init_op=None,
+            clear_devices=False,
+            main_op=None,
+            strip_default_attrs=False,
+            saver=None
+        )
+
+        builder.save()
 
         ##############
         # Test model
