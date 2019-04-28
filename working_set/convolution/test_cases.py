@@ -43,6 +43,7 @@ def get_test_cases():
     # }
     # test_cases.append(parameters_dict)
 
+    # This one is broken
     parameters_dict = {
         "label": "Lots of smaller filters, more FC",
         "learning_rate": 0.001,

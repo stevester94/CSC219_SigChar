@@ -250,6 +250,8 @@ if __name__ == "__main__":
 
     case = json.loads(str_case)
 
+    print("Attempting to run %s" % case["label"])
+
     results = train_test_time(case)
 
     with open("test_results.json", "a") as f:
