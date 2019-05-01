@@ -14,4 +14,5 @@ with open(RESULTS_PATH, 'r') as content_file:
             print("No label")
         print("Num epochs: %d" % r["num_train_epochs"])
         print("Accuracy: %s" % str(r["accuracy"]))
+        print("Time (seconds): %f" % float(r["time"]))
         print("--------------------------")

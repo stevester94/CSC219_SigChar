@@ -21,6 +21,7 @@ DATASET_LEN_X = 2048
 DATASET_LEN_Y = 24
 
 BASE_DIR = "../../data_exploration/datasets/"
+EXPORT_DIR_BASE = "../models/"
 
 
 def train_and_test(_sentinel_= None, learning_rate=None,
@@ -28,7 +29,8 @@ def train_and_test(_sentinel_= None, learning_rate=None,
                    batch_size=None,
                    target=None,
                    network_conv_settings=None,
-                   network_fc_settings=None):
+                   network_fc_settings=None,
+                   label=None):
     if _sentinel_ != None:
         print("Can only use kwargs!")
         return
@@ -160,7 +162,8 @@ def train_and_test(_sentinel_= None, learning_rate=None,
     test_iter_node = test_iterator.get_next()
 
     # We're gonna save the entire model for later use
-    EXPORT_DIR = "/tmp/fuckin_save/"
+    EXPORT_DIR = EXPORT_DIR_BASE + label
+    print("Will export to %s" % EXPORT_DIR)
     builder = tf.saved_model.builder.SavedModelBuilder(EXPORT_DIR)
 
     with tf.Session() as sess:
@@ -259,7 +262,8 @@ def train_test_time(parameters_dict):
             batch_size = parameters_dict["batch_size"],
             target = parameters_dict["target"],
             network_conv_settings =  parameters_dict["network_conv_settings"],
-            network_fc_settings = parameters_dict["network_fc_settings"])
+            network_fc_settings = parameters_dict["network_fc_settings"],
+            label=parameters_dict["label"])
 
     time = timeit(wrapper, number=1)
 
