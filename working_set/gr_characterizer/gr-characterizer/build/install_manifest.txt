@@ -1,0 +1,9 @@
+/usr/local/lib/cmake/characterizer/characterizerConfig.cmake
+/usr/local/include/characterizer/api.h
+/usr/local/lib/python2.7/dist-packages/characterizer/__init__.py
+/usr/local/lib/python2.7/dist-packages/characterizer/characterizer.py
+/usr/local/lib/python2.7/dist-packages/characterizer/__init__.pyc
+/usr/local/lib/python2.7/dist-packages/characterizer/characterizer.pyc
+/usr/local/lib/python2.7/dist-packages/characterizer/__init__.pyo
+/usr/local/lib/python2.7/dist-packages/characterizer/characterizer.pyo
+/usr/local/share/gnuradio/grc/blocks/characterizer_characterizer.xml

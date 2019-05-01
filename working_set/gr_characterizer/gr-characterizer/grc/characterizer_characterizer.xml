@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<block>
+  <name>characterizer</name>
+  <key>characterizer_characterizer</key>
+  <category>[characterizer]</category>
+  <import>import characterizer</import>
+  <make>characterizer.characterizer()</make>
+  <sink>
+    <name>in</name>
+    <type>complex</type>
+  </sink>
+</block>

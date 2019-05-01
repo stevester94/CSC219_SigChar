@@ -1,0 +1,30 @@
+INCLUDE(FindPkgConfig)
+PKG_CHECK_MODULES(PC_CHARACTERIZER characterizer)
+
+FIND_PATH(
+    CHARACTERIZER_INCLUDE_DIRS
+    NAMES characterizer/api.h
+    HINTS $ENV{CHARACTERIZER_DIR}/include
+        ${PC_CHARACTERIZER_INCLUDEDIR}
+    PATHS ${CMAKE_INSTALL_PREFIX}/include
+          /usr/local/include
+          /usr/include
+)
+
+FIND_LIBRARY(
+    CHARACTERIZER_LIBRARIES
+    NAMES gnuradio-characterizer
+    HINTS $ENV{CHARACTERIZER_DIR}/lib
+        ${PC_CHARACTERIZER_LIBDIR}
+    PATHS ${CMAKE_INSTALL_PREFIX}/lib
+          ${CMAKE_INSTALL_PREFIX}/lib64
+          /usr/local/lib
+          /usr/local/lib64
+          /usr/lib
+          /usr/lib64
+)
+
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(CHARACTERIZER DEFAULT_MSG CHARACTERIZER_LIBRARIES CHARACTERIZER_INCLUDE_DIRS)
+MARK_AS_ADVANCED(CHARACTERIZER_LIBRARIES CHARACTERIZER_INCLUDE_DIRS)
+
