@@ -30,7 +30,9 @@ all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
                    26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2]
 
 limited_snr = [-20, -10, 0, 10, 20, 30]
-high_snr = [24, 26, 28, 30]
+low_snr = [-20, -10]
+medium_snr = [0, 10]
+high_snr = [20, 30]
 thirty_snr = [30]
 
 subset_targets = []
@@ -51,8 +53,11 @@ subset_targets = []
 # subset_targets.append((easy_modulation_targets, all_snr_targets))
 # subset_targets.append((all_modulation_targets, all_snr_targets))
 
-subset_targets.append((subset_modulation_targets, thirty_snr))
+# subset_targets.append((subset_modulation_targets, thirty_snr))
 
+subset_targets.append((all_modulation_targets, low_snr))
+subset_targets.append((all_modulation_targets, medium_snr))
+subset_targets.append((all_modulation_targets, high_snr))
 
 
 
@@ -115,7 +120,7 @@ def convert_hdf5_to_dataset_file(target):
             writer.write(example.SerializeToString())
 
 
-# with Pool(4) as p:
-#     p.map(convert_hdf5_to_dataset_file, subset_targets)
+with Pool(4) as p:
+    p.map(convert_hdf5_to_dataset_file, subset_targets)
 
-convert_hdf5_to_dataset_file(subset_targets[0])
+# convert_hdf5_to_dataset_file(subset_targets[0])
