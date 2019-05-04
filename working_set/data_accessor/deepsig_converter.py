@@ -26,6 +26,8 @@ subset_modulation_targets = [
 easy_modulation_targets = ["OOK", "4ASK", "BPSK", "QPSK",
                            "8PSK", "16QAM", "AM-SSB-SC", "AM-DSB-SC", "FM", "GMSK", "OQPSK"]
 
+offenders = ["64QAM", "AM-SSB-WC"]
+
 all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
                    26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2]
 
@@ -55,9 +57,11 @@ subset_targets = []
 
 # subset_targets.append((subset_modulation_targets, thirty_snr))
 
-subset_targets.append((all_modulation_targets, low_snr))
-subset_targets.append((all_modulation_targets, medium_snr))
-subset_targets.append((all_modulation_targets, high_snr))
+# subset_targets.append((all_modulation_targets, low_snr))
+# subset_targets.append((all_modulation_targets, medium_snr))
+# subset_targets.append((all_modulation_targets, high_snr))
+
+subset_targets.append((offenders, limited_snr))
 
 
 
