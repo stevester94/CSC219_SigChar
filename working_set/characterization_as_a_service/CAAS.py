@@ -17,7 +17,7 @@ DATASET_LEN_X = 2048
 DATASET_LEN_Y = 24
 
 BASE_DIR = "../../data_exploration/datasets/"
-MODEL_DIR = "../models/fuckin_save"
+MODEL_DIR = "../models/OTA 256 filters"
 
 ######################
 # Server parameters 

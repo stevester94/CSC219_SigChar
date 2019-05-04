@@ -61,7 +61,10 @@ subset_targets = []
 # subset_targets.append((all_modulation_targets, medium_snr))
 # subset_targets.append((all_modulation_targets, high_snr))
 
-subset_targets.append((offenders, limited_snr))
+# subset_targets.append((offenders, limited_snr))
+subset_targets.append((offenders, low_snr))
+subset_targets.append((offenders, medium_snr))
+subset_targets.append((offenders, high_snr))
 
 
 

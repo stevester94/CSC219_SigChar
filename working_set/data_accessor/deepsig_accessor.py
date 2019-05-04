@@ -447,12 +447,16 @@ class Deepsig_Accessor:
         return sum_y
 
 if __name__ == '__main__':
-    modulation_targets = '32QAM', 'FM'
+    modulation_targets = ['32QAM']
     snr_targets = [30]
 
     ds_accessor = Deepsig_Accessor(
-        modulation_targets, snr_targets, 0.75, batch_size=200, throw_after_epoch=True, shuffle=True)
+        modulation_targets, snr_targets, 0.9, batch_size=200, throw_after_epoch=True, shuffle=True)
 
     f = h5py.File(deepsig_filename, 'r')
 
     print("Y_cksum: " + str(ds_accessor.cksum_train_labels()))
+    
+    print("Training samps in single modulation_snr: %s" % (ds_accessor.get_total_num_training_samples()))
+    print("Testing samps in single modulation_snr: %s" % (ds_accessor.get_total_num_testing_samples()))
+    print("Total samps in single modulation_snr: %s" % (ds_accessor.get_total_num_training_samples() +ds_accessor.get_total_num_testing_samples()))

@@ -9,6 +9,8 @@ subset_modulation_targets = [
 easy_modulation_targets = ["OOK", "4ASK", "BPSK", "QPSK",
                            "8PSK", "16QAM", "AM-SSB-SC", "AM-DSB-SC", "FM", "GMSK", "OQPSK"]
 
+offenders = ["64QAM", "AM-SSB-WC"]
+
 all_snr_targets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
                    26, 28, 30, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2]
 limited_snr = [-20, -10, 0, 10, 20, 30]
