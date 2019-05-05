@@ -21,6 +21,12 @@
 
 import numpy
 from gnuradio import gr
+import socket
+import struct
+
+CAAS_IP = "127.0.0.1"
+CAAS_PORT = 1337
+BUFFER_SIZE = 20
 
 class characterizer(gr.sync_block):
     """
@@ -32,8 +38,24 @@ class characterizer(gr.sync_block):
             in_sig=[numpy.complex64],
             out_sig=None)
         self.buffer = []
-        self.threshold = 0.8
+        self.threshold = 0
         self.buffer_target_len = 1024
+
+    def request_characterization(self, IQ):
+        print("Sum of payload: %f" % sum(IQ))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((CAAS_IP, CAAS_PORT))
+
+        buf = struct.pack('%sf' % len(IQ), *IQ)
+
+        sock.sendall(buf)
+
+        response = sock.recv(BUFFER_SIZE)
+        sock.close()
+
+        classification, confidence = struct.unpack("If", response)
+
+        return classification, confidence
 
     def work(self, input_items, output_items):
         # Input items is an array of one element,
@@ -44,19 +66,20 @@ class characterizer(gr.sync_block):
 
         for index, magnitude in enumerate(magnitudes):
             if magnitude > self.threshold:
-                self.buffer.append(input_iq[0])
+                self.buffer.append(input_iq[index])
 
                 if len(self.buffer) == self.buffer_target_len:
-                    print("Buffer filled, characterizing")
+                    np_array = numpy.array(self.buffer)
 
-                    # TENSORFLOW SHIT GOES HERE
+                    classification, confidence = self.request_characterization(np_array.view(numpy.float32))
+
+                    print("Classification: %d, confidence: %f" % (classification, confidence))
 
                     self.buffer = []
                     break
             else:
-                print("Signal too low, clearing buffer")
+                print("Signal too low (%f), clearing buffer" % magnitude)
                 self.buffer = []
-                break
 
         # I guess this is important
         return len(input_items[0])
