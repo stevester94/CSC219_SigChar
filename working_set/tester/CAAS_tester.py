@@ -81,7 +81,7 @@ def call_CAAS(data):
     return {"classification":classification, "confidence":confidence}
 
 
-target = (offenders, high_snr)
+target = (all_modulation_targets, high_snr)
 
 test_path = build_dataset_names(target)[1]
 test_ds = tf.data.TFRecordDataset(test_path).map(transform_to_orig)
