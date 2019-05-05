@@ -13,5 +13,6 @@ for r in [r for r in results if (float(r["time"]) > 2000 and len(r["target"][0])
 
     except:
         print("label: %s, accuracy: %s, num_train_epochs:%s, len_mods: %s, len_snr: %s, time: %s" % ("NONE", r["accuracy"], r["num_train_epochs"], len(r["target"][0]), len(r["target"][1]), r["time"]))
-    print("    network_conv_settings: %s" % r["network_conv_settings"])
-    print("    network_fc_settings: %s" % r["network_fc_settings"])
+
+    # print("    network_conv_settings: %s" % r["network_conv_settings"])
+    # print("    network_fc_settings: %s" % r["network_fc_settings"])
