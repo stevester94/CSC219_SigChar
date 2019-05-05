@@ -229,6 +229,27 @@ def get_test_cases():
     }
     test_cases.append(case)
 
+    case = {
+        "label": "Deep perceptron, 8+1 hidden of 256",
+        "learning_rate": 0.001,
+        "num_train_epochs": 50,
+        "batch_size": 100,
+        "target": (all_modulation_targets, limited_snr),
+        "network_conv_settings": [
+        ],
+        "network_fc_settings": [
+            {"fc_num_nodes": 256},
+            {"fc_num_nodes": 256},
+            {"fc_num_nodes": 256},
+            {"fc_num_nodes": 256},
+            {"fc_num_nodes": 256},
+            {"fc_num_nodes": 256},
+            {"fc_num_nodes": 256},
+            {"fc_num_nodes": 256}
+        ]
+    }
+    test_cases.append(case)
+
     return test_cases
 
 def get_toy_test_cases():
@@ -291,3 +312,152 @@ def get_robust_easy():
     test_cases.append(parameters_dict)
 
     return test_cases
+
+
+def get_offenders():
+    test_cases = []
+
+    # case = {
+    #     "label": "SEPARATOR OTA 128 filters, 4+1 hidden of 128",
+    #     "learning_rate": 0.001,
+    #     "num_train_epochs": 50,
+    #     "batch_size": 100,
+    #         "target": (offenders, limited_snr),
+    #     "network_conv_settings": [
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+    #     ],
+    #     "network_fc_settings": [
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128}
+    #     ]
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "SEPARATOR OTA 128 filters, 2+1 hidden of 128",
+    #     "learning_rate": 0.001,
+    #     "num_train_epochs": 50,
+    #     "batch_size": 100,
+    #     "target": (offenders, limited_snr),
+    #     "network_conv_settings": [
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 128, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+    #     ],
+    #     "network_fc_settings": [
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128}
+    #     ]
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "SEPARATOR OTA 256 filters, 2+1 hidden of 128",
+    #     "learning_rate": 0.001,
+    #     "num_train_epochs": 50,
+    #     "batch_size": 100,
+    #     "target": (offenders, limited_snr),
+    #     "network_conv_settings": [
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+    #     ],
+    #     "network_fc_settings": [
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128}
+    #     ]
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "SEPARATOR OTA 256 filters, 4+1 hidden of 128",
+    #     "learning_rate": 0.001,
+    #     "num_train_epochs": 50,
+    #     "batch_size": 100,
+    #     "target": (offenders, limited_snr),
+    #     "network_conv_settings": [
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+    #     ],
+    #     "network_fc_settings": [
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128}
+    #     ]
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "SEPARATOR OTA 256 filters, 4+1 hidden of 256",
+    #     "learning_rate": 0.001,
+    #     "num_train_epochs": 50,
+    #     "batch_size": 100,
+    #     "target": (offenders, limited_snr),
+    #     "network_conv_settings": [
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+    #     ],
+    #     "network_fc_settings": [
+    #         {"fc_num_nodes": 256},
+    #         {"fc_num_nodes": 256},
+    #         {"fc_num_nodes": 256},
+    #         {"fc_num_nodes": 256}
+    #     ]
+    # }
+    # test_cases.append(case)
+
+    case = {
+        "label": "SEPARATOR OTA 256 filters, 4+1 hidden of 256, 100 epochs",
+        "learning_rate": 0.001,
+        "num_train_epochs": 100,
+        "batch_size": 100,
+        "target": (offenders, limited_snr),
+        "network_conv_settings": [
+            {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+            {"conv_num_filters": 256, "conv_kernel_size": 3, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+        ],
+        "network_fc_settings": [
+            {"fc_num_nodes": 256},
+            {"fc_num_nodes": 256},
+            {"fc_num_nodes": 256},
+            {"fc_num_nodes": 256}
+        ]
+    }
+    test_cases.append(case)
+
+    return test_cases
+
+
+
