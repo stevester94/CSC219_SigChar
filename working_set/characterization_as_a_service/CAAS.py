@@ -18,7 +18,8 @@ DATASET_LEN_Y = 24
 
 BASE_DIR = "../../data_exploration/datasets/"
 GENERAL_MODEL_DIR = "../models/OTA 256 filters"
-SEPARATOR_MODEL_DIR = "../models/OTA 256 filters"
+# SEPARATOR_MODEL_DIR = "../models/OTA 256 filters"
+SEPARATOR_MODEL_DIR = "../models/SEPARATOR OTA 256 filters, 2+1 hidden of 128"
 
 ######################
 # Server parameters 
@@ -153,9 +154,12 @@ with tf.Session() as sess:
         classification_str = onehot_class_lookup[classification]
         confidence = confidence[0][classification] # Index to softmax of our prediction
 
-        if classification_str in offender_list:
-            print("Offender predicted (%s), using separator model" % classification_str)
-            confidence, classification = sess.run([separator_soft_predict, separator_predictions], feed_dict={"SEPARATOR/x_placeholder:0": [X]})
+        # if classification_str in offender_list:
+        #     print("Offender predicted (%s), using separator model" % classification_str)
+        #     confidence, classification = sess.run([separator_soft_predict, separator_predictions], feed_dict={"SEPARATOR/x_placeholder:0": [X]})
+
+        #     classification = classification[0]
+        #     confidence = confidence[0][classification]  # Index to softmax of our prediction    
 
 
         print("Classification: %s, Confidence: %s" % (classification, confidence))
