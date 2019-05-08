@@ -339,100 +339,100 @@ def get_test_cases():
     # }
     # test_cases.append(case)
 
-    case = {
-        "label": "Toy 1 epoch GPU",
-        "learning_rate": 0.001,
-        "num_train_epochs": 1,
-        "batch_size": 100,
-        "target": (all_modulation_targets, thirty_snr),
-        "network_conv_settings": [
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2}
-        ],
-        "network_fc_settings": [
-            {"fc_num_nodes": 128},
-            {"fc_num_nodes": 128}
-        ]
-    }
-    test_cases.append(case)
+    # case = {
+    #     "label": "Toy 1 epoch GPU",
+    #     "learning_rate": 0.001,
+    #     "num_train_epochs": 1,
+    #     "batch_size": 100,
+    #     "target": (all_modulation_targets, thirty_snr),
+    #     "network_conv_settings": [
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+    #     ],
+    #     "network_fc_settings": [
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128}
+    #     ]
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "OTA 256, filters 5,2, 10E, LOW",
+    #     "learning_rate": 0.001,
+    #     "num_train_epochs": 10,
+    #     "batch_size": 100,
+    #     "target": (all_modulation_targets, low_snr),
+    #     "network_conv_settings": [
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+    #     ],
+    #     "network_fc_settings": [
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128}
+    #     ]
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "OTA 256, filters 5,2, 10E, MEDIUM",
+    #     "learning_rate": 0.001,
+    #     "num_train_epochs": 10,
+    #     "batch_size": 100,
+    #     "target": (all_modulation_targets, medium_snr),
+    #     "network_conv_settings": [
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+    #     ],
+    #     "network_fc_settings": [
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128}
+    #     ]
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "OTA 256, filters 5,2, 10E, HIGH",
+    #     "learning_rate": 0.001,
+    #     "num_train_epochs": 10,
+    #     "batch_size": 100,
+    #     "target": (all_modulation_targets, high_snr),
+    #     "network_conv_settings": [
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
+    #         {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2}
+    #     ],
+    #     "network_fc_settings": [
+    #         {"fc_num_nodes": 128},
+    #         {"fc_num_nodes": 128}
+    #     ]
+    # }
+    # test_cases.append(case)
 
     case = {
-        "label": "OTA 256, filters 5,2, 10E, LOW",
+        "label": "SEPARATOR OTA 256, filters 5,2, 10E, ALL",
         "learning_rate": 0.001,
         "num_train_epochs": 10,
         "batch_size": 100,
-        "target": (all_modulation_targets, low_snr),
-        "network_conv_settings": [
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2}
-        ],
-        "network_fc_settings": [
-            {"fc_num_nodes": 128},
-            {"fc_num_nodes": 128}
-        ]
-    }
-    test_cases.append(case)
-
-    case = {
-        "label": "OTA 256, filters 5,2, 10E, MEDIUM",
-        "learning_rate": 0.001,
-        "num_train_epochs": 10,
-        "batch_size": 100,
-        "target": (all_modulation_targets, medium_snr),
-        "network_conv_settings": [
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2}
-        ],
-        "network_fc_settings": [
-            {"fc_num_nodes": 128},
-            {"fc_num_nodes": 128}
-        ]
-    }
-    test_cases.append(case)
-
-    case = {
-        "label": "OTA 256, filters 5,2, 10E, HIGH",
-        "learning_rate": 0.001,
-        "num_train_epochs": 10,
-        "batch_size": 100,
-        "target": (all_modulation_targets, high_snr),
-        "network_conv_settings": [
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2},
-            {"conv_num_filters": 256, "conv_kernel_size": 2, "max_pool_stride": 2, "max_pool_kernel_size": 2}
-        ],
-        "network_fc_settings": [
-            {"fc_num_nodes": 128},
-            {"fc_num_nodes": 128}
-        ]
-    }
-    test_cases.append(case)
-
-    case = {
-        "label": "OTA 256, filters 5,2, 10E, ALL",
-        "learning_rate": 0.001,
-        "num_train_epochs": 10,
-        "batch_size": 100,
-        "target": (all_modulation_targets, all_snr_targets),
+        "target": (offenders, all_snr_targets),
         "network_conv_settings": [
             {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
             {"conv_num_filters": 256, "conv_kernel_size": 5, "max_pool_stride": 2, "max_pool_kernel_size": 2},
