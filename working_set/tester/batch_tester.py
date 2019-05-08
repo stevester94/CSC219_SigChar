@@ -19,7 +19,7 @@ DATASET_LEN_Y = 24
 
 BASE_DIR = "../../data_exploration/datasets/"
 
-batch_size = 1000
+batch_size = 100
 
 ##########################
 # Configure our datasets
@@ -27,11 +27,6 @@ batch_size = 1000
 def build_dataset_names(target):
     mod_names = '_'.join(mod for mod in target[0])
     snr_names = '_'.join(str(snr) for snr in target[1])
-
-    # Have to have this fucking special case because the filename would be too long
-    # if target[0] == all_modulation_targets and target[1] == all_snr_targets:
-    #     prelim_filename = BASE_DIR + "THE_BIG_DICK"
-    # else:
     prelim_filename = BASE_DIR + mod_names + snr_names
 
     print("Using %s" % prelim_filename)
@@ -89,11 +84,6 @@ def tier_test_model(target, model_dir):
 
     # It's a little fruity, but we need to have local placeholders... for reasons...
     y = tf.placeholder(tf.int32, [None, DATASET_LEN_Y], name="tester_y_placeholder")
-    total_confusion = tf.Variable(tf.zeros(
-        [DATASET_LEN_Y, DATASET_LEN_Y],
-        dtype=tf.dtypes.int32,
-        name=None
-    ))
 
     init_op = tf.global_variables_initializer()
 
@@ -112,19 +102,6 @@ def tier_test_model(target, model_dir):
         acc, acc_op = tf.metrics.accuracy(labels=labels,
                                     predictions=predictions)
 
-        batch_confusion = tf.math.confusion_matrix(
-            labels,
-            predictions,
-            num_classes=DATASET_LEN_Y,
-            dtype=tf.dtypes.int32,
-            name=None,
-            weights=None
-        )
-
-
-        cumulate_confusion = tf.add(batch_confusion, total_confusion)
-        cumulate_confusion = tf.assign(total_confusion, cumulate_confusion)
-
         sess.run(test_iterator.initializer)
 
         sess.run(tf.local_variables_initializer())
@@ -136,61 +113,136 @@ def tier_test_model(target, model_dir):
                 x_test = val[0][0]
                 y_test = val[0][1]
 
-                sess.run([acc_op, cumulate_confusion],
+                sess.run([acc_op],
                         feed_dict={"x_placeholder:0": x_test, y: y_test})
             except tf.errors.OutOfRangeError:
                 break
 
-        return {"confusion": sess.run(total_confusion), "accuracy": sess.run(acc)}
 
+        return {"accuracy": sess.run(acc)}
 
-def plot_confusion_matrix(confusion, labels):
-   # Set up figure with colorbar
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-
-    # cax = ax.matshow(d, cmap='bone')
-    cax = ax.matshow(confusion, cmap='Purples')
-    fig.colorbar(cax)
-
-    # Set up axes
-    ax.set_xticklabels([""] + labels, rotation=90)
-    ax.set_yticklabels([""] + labels)
-
-    # Show label at every tick
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
-    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
-
-    # This is very hack-ish
-    plt.gca().set_xticks([x - 0.5 for x in plt.gca().get_xticks()][1:], minor='true')
-    plt.gca().set_yticks([y - 0.5 for y in plt.gca().get_yticks()][1:], minor='true')
-    plt.grid(which='minor')
-
-    # Set labels
-    ax.set_xlabel("Predicted Modulation")
-    ax.set_ylabel("Actual Modulation")
-
-    # Accuracy subplot
-    # Calc the correct cases
-    correct = 0
-    total = 0
-    for i in range(0, len(confusion[0])):
-        correct += confusion[i][i]
-    total = np.sum(confusion)
-    ax.text(0, 30, "Accuracy: %f" % (correct/total))
-
-    plt.show()
 
 if __name__ == "__main__":
     EXPORT_DIR = "../models/"
 
     test_cases = []
 
+    # case = {
+    #     "label": "OTA 256 filters",
+    #     "target": (all_modulation_targets, low_snr)
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "OTA 256 filters",
+    #     "target": (all_modulation_targets, medium_snr)
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "OTA 256 filters",
+    #     "target": (all_modulation_targets, high_snr)
+    # }
+    # test_cases.append(case)
+###############################
+#     case = {
+#         "label": "OTA 256, filters 5,2, 10E, LOW",
+#         "target": (all_modulation_targets, low_snr)
+#     }
+#     test_cases.append(case)
+
+#     case = {
+#         "label": "OTA 256, filters 5,2, 10E, LOW",
+#         "target": (all_modulation_targets, medium_snr)
+#     }
+#     test_cases.append(case)
+
+#     case = {
+#         "label": "OTA 256, filters 5,2, 10E, LOW",
+#         "target": (all_modulation_targets, high_snr)
+#     }
+#     test_cases.append(case)
+
     case = {
-        "label": "OTA 256, filters 5,2, 10E, ALL",
-        "target": (all_modulation_targets, all_snr_targets)
+        "label": "OTA 256, filters 5,2, 10E, LOW",
+        "target": (all_modulation_targets, limited_snr)
     }
     test_cases.append(case)
+# ####################
+#     case = {
+#         "label": "OTA 256, filters 5,2, 10E, MEDIUM",
+#         "target": (all_modulation_targets, low_snr)
+#     }
+#     test_cases.append(case)
+
+#     case = {
+#         "label": "OTA 256, filters 5,2, 10E, MEDIUM",
+#         "target": (all_modulation_targets, medium_snr)
+#     }
+#     test_cases.append(case)
+
+#     case = {
+#         "label": "OTA 256, filters 5,2, 10E, MEDIUM",
+#         "target": (all_modulation_targets, high_snr)
+#     }
+#     test_cases.append(case)
+
+    case = {
+        "label": "OTA 256, filters 5,2, 10E, MEDIUM",
+        "target": (all_modulation_targets, limited_snr)
+    }
+    test_cases.append(case)
+# ######################
+#     case = {
+#         "label": "OTA 256, filters 5,2, 10E, HIGH",
+#         "target": (all_modulation_targets, low_snr)
+#     }
+#     test_cases.append(case)
+
+#     case = {
+#         "label": "OTA 256, filters 5,2, 10E, HIGH",
+#         "target": (all_modulation_targets, medium_snr)
+#     }
+#     test_cases.append(case)
+
+#     case = {
+#         "label": "OTA 256, filters 5,2, 10E, HIGH",
+#         "target": (all_modulation_targets, high_snr)
+#     }
+#     test_cases.append(case)
+
+    case = {
+        "label": "OTA 256, filters 5,2, 10E, HIGH",
+        "target": (all_modulation_targets, limited_snr)
+    }
+    test_cases.append(case)
+##########################
+    # case = {
+    #     "label": "OTA 256, filters 5,2, 10E",
+    #     "target": (all_modulation_targets, low_snr)
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "OTA 256, filters 5,2, 10E",
+    #     "target": (all_modulation_targets, medium_snr)
+    # }
+    # test_cases.append(case)
+
+    # case = {
+    #     "label": "OTA 256, filters 5,2, 10E",
+    #     "target": (all_modulation_targets, high_snr)
+    # }
+    # test_cases.append(case)
+
+    case = {
+        "label": "OTA 256, filters 5,2, 10E",
+        "target": (all_modulation_targets, limited_snr)
+    }
+    test_cases.append(case)
+
+
+
 
     results = None
     for case in test_cases:
@@ -199,7 +251,6 @@ if __name__ == "__main__":
         print(EXPORT_DIR+case["label"])
         results = tier_test_model(case["target"], EXPORT_DIR+case["label"])
 
-        print("Confusion:\n %s" % results["confusion"].tolist())
-        print("Accuracy: %s" % results["accuracy"])
+        print("====================================== Accuracy: %s" % results["accuracy"])
         
         # plot_confusion_matrix(results["confusion"], case["target"][0])

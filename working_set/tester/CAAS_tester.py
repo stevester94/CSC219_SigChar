@@ -7,6 +7,8 @@ from time import sleep
 import numpy as np
 import struct
 import socket
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 tf.enable_eager_execution()
 
@@ -36,6 +38,43 @@ DATASET_LEN_Y = 24
 
 BASE_DIR = "../../data_exploration/datasets/"
 
+
+def plot_confusion_matrix(confusion, labels):
+   # Set up figure with colorbar
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    # cax = ax.matshow(d, cmap='bone')
+    cax = ax.matshow(confusion, cmap='Purples')
+    fig.colorbar(cax)
+
+    # Set up axes
+    ax.set_xticklabels([""] + labels, rotation=90)
+    ax.set_yticklabels([""] + labels)
+
+    # Show label at every tick
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+
+    # This is very hack-ish
+    plt.gca().set_xticks([x - 0.5 for x in plt.gca().get_xticks()][1:], minor='true')
+    plt.gca().set_yticks([y - 0.5 for y in plt.gca().get_yticks()][1:], minor='true')
+    plt.grid(which='minor')
+
+    # Set labels
+    ax.set_xlabel("Predicted Modulation")
+    ax.set_ylabel("Actual Modulation")
+
+    # Accuracy subplot
+    # Calc the correct cases
+    correct = 0
+    total = 0
+    for i in range(0, len(confusion[0])):
+        correct += confusion[i][i]
+    total = np.sum(confusion)
+    ax.text(0, 30, "Accuracy: %f" % (correct/total))
+
+    plt.show()
 
 def build_dataset_names(target):
     mod_names = '_'.join(mod for mod in target[0])
@@ -81,7 +120,7 @@ def call_CAAS(data):
     return {"classification":classification, "confidence":confidence}
 
 
-target = (all_modulation_targets, high_snr)
+target = (all_modulation_targets, limited_snr)
 
 test_path = build_dataset_names(target)[1]
 test_ds = tf.data.TFRecordDataset(test_path).map(transform_to_orig)
@@ -113,3 +152,5 @@ for samp in test_ds:
 
 print("Accuracy: %s" % (correct/total_samps))
 print("Confusion: %s" % confusion)
+
+plot_confusion_matrix(confusion, all_modulation_targets)

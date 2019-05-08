@@ -3,8 +3,8 @@ import subprocess
 import json
 
 
-for case in get_test_cases():
-# for case in get_toy_test_cases():
+# for case in get_test_cases():
+for case in get_toy_test_cases():
 # for case in get_offenders():
     str_case = json.dumps(case)
 
