@@ -17,9 +17,9 @@ DATASET_LEN_X = 2048
 DATASET_LEN_Y = 24
 
 BASE_DIR = "../../data_exploration/datasets/"
-GENERAL_MODEL_DIR = "../models/OTA 256 filters"
-# SEPARATOR_MODEL_DIR = "../models/OTA 256 filters"
-SEPARATOR_MODEL_DIR = "../models/SEPARATOR OTA 256 filters, 2+1 hidden of 128"
+GENERAL_MODEL_DIR = "../models/OTA 256, filters 5,2, 10E, LOW"
+# SEPARATOR_MODEL_DIR = "../models/SEPARATOR OTA 256 filters, 2+1 hidden of 128"
+SEPARATOR_MODEL_DIR = None
 
 ######################
 # Server parameters 
@@ -131,7 +131,9 @@ def sender_helper(send_sock, classification, confidence):
 with tf.Session() as sess:
 
     tf.saved_model.loader.load(sess, ["fuck"], GENERAL_MODEL_DIR, import_scope="GENERAL")
-    tf.saved_model.loader.load(sess, ["fuck"], SEPARATOR_MODEL_DIR, import_scope="SEPARATOR")
+
+    if SEPARATOR_MODEL_DIR != None:
+        tf.saved_model.loader.load(sess, ["fuck"], SEPARATOR_MODEL_DIR, import_scope="SEPARATOR")
 
     # print("Default ops")
     # print(tf.get_default_graph().get_operations())
@@ -139,8 +141,9 @@ with tf.Session() as sess:
     general_soft_predict = tf.get_default_graph().get_tensor_by_name("GENERAL/soft_predict:0")
     general_predictions = tf.argmax(tf.nn.softmax(general_soft_predict), 1)
 
-    separator_soft_predict = tf.get_default_graph().get_tensor_by_name("SEPARATOR/soft_predict:0")
-    separator_predictions = tf.argmax(tf.nn.softmax(separator_soft_predict), 1)
+    if SEPARATOR_MODEL_DIR != None:
+        separator_soft_predict = tf.get_default_graph().get_tensor_by_name("SEPARATOR/soft_predict:0")
+        separator_predictions = tf.argmax(tf.nn.softmax(separator_soft_predict), 1)
 
     print("CAAS ready for service")
     while True:
@@ -154,12 +157,12 @@ with tf.Session() as sess:
         classification_str = onehot_class_lookup[classification]
         confidence = confidence[0][classification] # Index to softmax of our prediction
 
-        # if classification_str in offender_list:
-        #     print("Offender predicted (%s), using separator model" % classification_str)
-        #     confidence, classification = sess.run([separator_soft_predict, separator_predictions], feed_dict={"SEPARATOR/x_placeholder:0": [X]})
+        if classification_str in offender_list and SEPARATOR_MODEL_DIR != None:
+            print("Offender predicted (%s), using separator model" % classification_str)
+            confidence, classification = sess.run([separator_soft_predict, separator_predictions], feed_dict={"SEPARATOR/x_placeholder:0": [X]})
 
-        #     classification = classification[0]
-        #     confidence = confidence[0][classification]  # Index to softmax of our prediction    
+            classification = classification[0]
+            confidence = confidence[0][classification]  # Index to softmax of our prediction    
 
 
         print("Classification: %s, Confidence: %s" % (classification, confidence))
